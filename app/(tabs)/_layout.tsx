@@ -1,15 +1,19 @@
 import { Tabs } from 'expo-router';
+import BottomTabBar from '../../components/BottomTabBar';
+import { colors } from '../../constants/theme';
 
-// Bottom tab navigator. Required glue so the (tabs) group renders — not in the
-// original spec list, but a route group needs a layout to become tabs.
+// Bottom tab navigator. Order: Home · Moods · Capture(center) · Journal · Profile.
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="day" options={{ title: 'Day' }} />
-      <Tabs.Screen name="capture" options={{ title: 'Capture' }} />
-      <Tabs.Screen name="journal" options={{ title: 'Journal' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+    <Tabs
+      tabBar={(props) => <BottomTabBar {...(props as any)} />}
+      screenOptions={{ headerShown: false, animation: 'shift', sceneStyle: { backgroundColor: colors.bg } }}
+    >
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="moods" />
+      <Tabs.Screen name="capture" />
+      <Tabs.Screen name="journal" />
+      <Tabs.Screen name="profile" />
     </Tabs>
   );
 }

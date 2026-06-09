@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Food Mood</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Outfit', -apple-system, system-ui, sans-serif;
+    background: #E8E3DB;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(120% 90% at 50% 0%, #EFEAE2 0%, #E2DCD2 60%, #D8D1C6 100%);
+  }
+  #scaler { transform-origin: center center; }
+
+  /* theme tokens live on the device root, set per-instance below */
+  .fm-theme {
+    --bg: #FAF8F4;
+    --card: #FFFFFF;
+    --chip: #F0ECE3;
+    --line: rgba(60,48,36,0.10);
+    --ink-1: #2A2622;
+    --ink-2: #6C645A;
+    --ink-3: #9C9288;
+    --accent: #232A33;
+  }
+  .fm-theme[data-dark="true"] {
+    --bg: #191715;
+    --card: #232120;
+    --chip: #2B2825;
+    --line: rgba(255,255,255,0.09);
+    --ink-1: #F1ECE4;
+    --ink-2: #B6AEA3;
+    --ink-3: #837B71;
+  }
+
+  /* screen transition — transform only, never hides content (robust to
+     throttled/printed frames where the timeline may sit at frame 0) */
+  .screen-enter { animation: screenIn 460ms cubic-bezier(.22,.61,.36,1) both; }
+  @keyframes screenIn {
+    from { transform: translateY(9px); }
+    to   { transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .screen-enter { animation: none; }
+  }
+  @keyframes pop {
+    0% { opacity: 0; transform: scale(0.4); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* image-slot empty state — striped, monospace, on-brand */
+  image-slot {
+    --is-bg: repeating-linear-gradient(45deg, rgba(0,0,0,0.035) 0 6px, rgba(0,0,0,0.06) 6px 12px);
+    font-family: 'SF Mono', ui-monospace, monospace;
+  }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+
+  /* in-app range slider */
+  input.fm-range {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; border-radius: 999px; outline: none;
+    margin: 0; cursor: pointer;
+  }
+  input.fm-range::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.28); cursor: pointer;
+  }
+  input.fm-range::-moz-range-thumb {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.28); cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div id="stage"><div id="scaler"></div></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="image-slot.js"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="screens.jsx"></script>
+<script type="text/babel" src="journal.jsx"></script>
+<script type="text/babel" src="profile.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "dark": false,
+  "radius": 6,
+  "accent": "#232A33",
+  "macro": [
+    "#3E3833",
+    "#9A8C7A",
+    "#D6CCBE"
+  ]
+}/*EDITMODE-END*/;
+
+const MACRO_PALETTES = [
+  ["#3E3833", "#9A8C7A", "#D6CCBE"], // tonal taupe
+  ["#8B6F47", "#C9A876", "#A8B8A0"], // earth
+  ["#5C6B78", "#9DB0A6", "#D9CDB6"]  // cool clay
+];
+const ACCENTS = ["#232A33", "#2E2A26", "#3A463E"];
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [screen, setScreen] = useState('home');     // home | picker | breakdown | day | moods | journal | profile
+  const [meal, setMeal] = useState(null);
+  const [captured, setCaptured] = useState(null);
+  const [day, setDay] = useState(null);             // selected week-day for Day View
+  const [backTo, setBackTo] = useState('home');     // where Breakdown returns to
+
+  // Editable mood list (drives the Mood tab + post-meal picker), persisted.
+  const [moods, setMoodsState] = useState(() => {
+    try { const s = localStorage.getItem('fm_moods'); if (s) return JSON.parse(s); } catch (e) {}
+    return MOOD_ORDER.map(id => ({ ...MOODS[id] }));
+  });
+  const setMoods = (next) => {
+    setMoodsState(next);
+    try { localStorage.setItem('fm_moods', JSON.stringify(next)); } catch (e) {}
+  };
+  // keep the global registry in sync so dots/breakdowns can resolve any mood id
+  useEffect(() => { Object.assign(MOODS, Object.fromEntries(moods.map(m => [m.id, m]))); }, [moods]);
+
+  // Journal entries (persisted). setEntries accepts a value or an updater fn.
+  const [entries, setEntriesState] = useState(() => {
+    try { const s = localStorage.getItem('fm_journal'); if (s) return JSON.parse(s); } catch (e) {}
+    return SEED_JOURNAL;
+  });
+  const setEntries = (next) => setEntriesState(prev => {
+    const val = typeof next === 'function' ? next(prev) : next;
+    try { localStorage.setItem('fm_journal', JSON.stringify(val)); } catch (e) {}
+    return val;
+  });
+  // create a journal entry from a captured-meal note
+  const addEntry = (text, moodId) => {
+    const ts = Date.now();
+    let time = '';
+    try { time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); } catch (e) {}
+    setEntries(prev => [{ id: 'j' + ts.toString(36), ts, updatedAt: ts, moodId, link: { label: 'Today\u2019s meals' }, text, date: TODAY, time }, ...prev]);
+  };
+
+  // Profile / settings (persisted). setProfile accepts a value or updater fn.
+  const [profile, setProfileState] = useState(() => {
+    try { const s = localStorage.getItem('fm_profile'); if (s) return JSON.parse(s); } catch (e) {}
+    return DEFAULT_PROFILE;
+  });
+  const setProfile = (next) => setProfileState(prev => {
+    const val = typeof next === 'function' ? next(prev) : next;
+    try { localStorage.setItem('fm_profile', JSON.stringify(val)); } catch (e) {}
+    return val;
+  });
+
+  // fit-to-viewport scaling of the 402x874 device
+  useEffect(() => {
+    const W = 402, H = 874;
+    const fit = () => {
+      const vw = window.innerWidth, vh = window.innerHeight;
+      if (vw < 40 || vh < 40) { requestAnimationFrame(fit); return; } // not laid out yet
+      const margin = vw <= W + 8 ? 0 : 24; // edge-to-edge when host ~= device
+      const s = Math.max(0.2, Math.min((vw - margin) / W, (vh - margin) / H, 1));
+      const el = document.getElementById('scaler');
+      if (el) el.style.transform = `scale(${s})`;
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
+  const go = (next) => setScreen(next);
+
+  let view;
+  if (screen === 'home') {
+    view = <HomeScreen t={t} showCal={!!profile.showCalories}
+      onCapture={() => { setCaptured(null); go('picker'); }}
+      onOpenMeal={(m) => { setMeal(m); setCaptured(null); setBackTo('home'); go('breakdown'); }}
+      onOpenDayView={(d) => { setDay(d); go('day'); }}
+      onOpenMoods={() => go('moods')}
+      onOpenJournal={() => go('journal')}
+      onOpenProfile={() => go('profile')} />;
+  } else if (screen === 'picker') {
+    view = <MoodPicker t={t} moods={moods}
+      onBack={() => go('home')}
+      onContinue={(mood) => { setCaptured(mood); setMeal(null); setBackTo('home'); go('breakdown'); }} />;
+  } else if (screen === 'moods') {
+    view = <MoodsManager t={t} moods={moods} setMoods={setMoods} accent={t.accent}
+      onHome={() => go('home')}
+      onCapture={() => { setCaptured(null); go('picker'); }}
+      onJournal={() => go('journal')}
+      onProfile={() => go('profile')} />;
+  } else if (screen === 'journal') {
+    view = <JournalTab t={t} moods={moods} entries={entries} setEntries={setEntries} accent={t.accent}
+      nav={{ onHome: () => go('home'), onMoods: () => go('moods'), onCapture: () => { setCaptured(null); go('picker'); }, onProfile: () => go('profile') }} />;
+  } else if (screen === 'profile') {
+    view = <ProfileScreen t={t} profile={profile} setProfile={setProfile} accent={t.accent}
+      nav={{ onHome: () => go('home'), onMoods: () => go('moods'), onCapture: () => { setCaptured(null); go('picker'); }, onJournal: () => go('journal') }} />;
+  } else if (screen === 'day') {
+    view = <DayView t={t} showCal={!!profile.showCalories} day={day || WEEK.find(d => d.today)}
+      onBack={() => go('home')}
+      onOpenMeal={(m) => { setMeal(m); setCaptured(null); setBackTo('day'); go('breakdown'); }} />;
+  } else {
+    view = <Breakdown t={t} showCal={!!profile.showCalories} meal={meal} capturedMood={captured}
+      onBack={() => go(captured ? 'home' : backTo)}
+      onDone={(note) => { if (captured && note && note.trim()) addEntry(note.trim(), captured); go(captured ? 'home' : backTo); }} />;
+  }
+
+  return (
+    <div className="fm-theme" data-dark={String(t.dark)} style={{
+      '--accent': t.accent,
+      borderRadius: 48,
+    }}>
+      <IOSDevice dark={t.dark}>
+        <div className="screen-enter" key={screen + (meal ? meal.id : '') + (captured || '') + (day ? day.label : '')} style={{ height: '100%' }}>
+          {view}
+        </div>
+      </IOSDevice>
+
+      <TweaksPanel>
+        <TweakSection label="Surface" />
+        <TweakToggle label="Dark mode" value={t.dark} onChange={(v) => setTweak('dark', v)} />
+        <TweakSlider label="Corner radius" value={t.radius} min={0} max={16} step={1} unit="px"
+          onChange={(v) => setTweak('radius', v)} />
+        <TweakColor label="Button colour" value={t.accent} options={ACCENTS}
+          onChange={(v) => setTweak('accent', v)} />
+        <TweakSection label="Macro bar" />
+        <TweakColor label="Palette" value={t.macro} options={MACRO_PALETTES}
+          onChange={(v) => setTweak('macro', v)} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('scaler')).render(<App />);
+</script>
+</body>
+</html>

@@ -36,6 +36,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# design handoff binary archive (the unzipped copy is kept in the repo)
+*.zip
+
 example
 
 # generated native folders

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Food Mood — Onboarding Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #FAF8F4;
+    --card: #FFFFFF;
+    --chip: #F0ECE3;
+    --line: rgba(60,48,36,0.10);
+    --ink-1: #2A2622;
+    --ink-2: #6C645A;
+    --ink-3: #9C9288;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: 'Outfit', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #E8E3DB; }
+
+  /* continuous, seamless left-to-right drift of the mood spectrum bar */
+  .mood-flow { background-size: 200% 100%; animation: moodDrift 18s linear infinite; }
+  @keyframes moodDrift {
+    from { background-position: 100% 50%; }
+    to   { background-position: 0% 50%; }
+  }
+  @media (prefers-reduced-motion: reduce) { .mood-flow { animation: none; background-position: 0% 50%; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="onboarding-screens.jsx"></script>
+
+<script type="text/babel">
+function App() {
+  const screens = [
+    ['o1', '1 · Welcome', OnbWelcome],
+    ['o2', '2 · The idea', OnbIdea],
+    ['o2b', '3 · About you', OnbPersonal],
+    ['o3', '4 · Meet your moods', OnbMoods],
+    ['o4', '5 · How it works', OnbHow],
+    ['o5', '6 · Set targets', OnbGoals],
+    ['o6', '7 · Reminders', OnbReminders],
+    ['o7', '8 · All set', OnbReady],
+  ];
+  return (
+    <DesignCanvas>
+      <DCSection id="onboarding" title="Onboarding Flow" subtitle="First-run · 8 steps · iPhone">
+        {screens.map(([id, label, C]) => (
+          <DCArtboard key={id} id={id} label={label} width={390} height={844}>
+            <C />
+          </DCArtboard>
+        ))}
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -1,10 +1,5 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import ScreenPlaceholder from '../../components/ScreenPlaceholder';
 
 export default function CaptureScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Placeholder: Capture</Text>
-    </View>
-  );
+  return <ScreenPlaceholder title="Capture" />;
 }
