@@ -1,5 +1,5 @@
 // Supabase data layer for meals: upload photo, create, list today, update mood.
-import { format, startOfDay } from 'date-fns';
+import { format, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { supabase, ensureSession } from './supabase';
 import type { Meal, DetectedMeal } from '../types';
 
@@ -84,6 +84,44 @@ export async function listTodayMeals(): Promise<Meal[]> {
     .order('captured_at', { ascending: true });
   if (error) throw error;
   return Promise.all((data ?? []).map(rowToMeal));
+}
+
+// Meals logged on a specific local day (yyyy-MM-dd), oldest first.
+export async function listMealsForDate(dateKey: string): Promise<Meal[]> {
+  await ensureSession();
+  const d = parseISO(dateKey);
+  const { data, error } = await supabase
+    .from('meals')
+    .select('*')
+    .gte('captured_at', startOfDay(d).toISOString())
+    .lte('captured_at', endOfDay(d).toISOString())
+    .order('captured_at', { ascending: true });
+  if (error) throw error;
+  return Promise.all((data ?? []).map(rowToMeal));
+}
+
+// Dominant mood per local day across a range → { 'yyyy-MM-dd': moodId }.
+// Only counts meals that have a logged mood.
+export async function listMoodDays(fromISO: string, toISO: string): Promise<Record<string, string>> {
+  await ensureSession();
+  const { data, error } = await supabase
+    .from('meals')
+    .select('mood, captured_at')
+    .not('mood', 'is', null)
+    .gte('captured_at', fromISO)
+    .lte('captured_at', toISO);
+  if (error) return {};
+  const byDay: Record<string, Record<string, number>> = {};
+  for (const r of data ?? []) {
+    if (!r.mood) continue;
+    const key = format(new Date(r.captured_at), 'yyyy-MM-dd');
+    (byDay[key] ??= {})[r.mood] = (byDay[key][r.mood] || 0) + 1;
+  }
+  const out: Record<string, string> = {};
+  for (const [key, counts] of Object.entries(byDay)) {
+    out[key] = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+  }
+  return out;
 }
 
 export async function getMealById(id: string): Promise<Meal | null> {

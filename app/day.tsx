@@ -1,26 +1,44 @@
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useCallback, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { format, parseISO } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import BackButton from '../components/BackButton';
 import MoodDot from '../components/MoodDot';
 import MealCard from '../components/MealCard';
-import { WEEK, mealsForDay, dayTotals, dominantMood, kcalOf, hexA } from '../constants/data';
-import { useMeals } from '../store/meals';
+import { dayTotals, dominantMood, kcalOf, hexA } from '../constants/data';
+import { listMealsForDate } from '../services/meals';
 import { useProfile } from '../store/profile';
 import { getMoodById } from '../store/moods';
 import { colors, fonts } from '../constants/theme';
+import type { Meal } from '../types';
 
-// High-level story of a single day. No charts, no insights — just the mood and meals.
 export default function DayViewScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { day } = useLocalSearchParams<{ day?: string }>();
-  const todayMeals = useMeals();
+  const params = useLocalSearchParams<{ date?: string }>();
   const showCal = useProfile().showCalories;
 
-  const wd = WEEK.find((d) => d.label === day) ?? WEEK.find((d) => d.today) ?? WEEK[1];
-  const meals = wd.today ? todayMeals : mealsForDay(wd.label);
+  const todayKey = format(new Date(), 'yyyy-MM-dd');
+  const dateKey = params.date || todayKey;
+  const isToday = dateKey === todayKey;
+
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      listMealsForDate(dateKey)
+        .then((m) => { if (active) setMeals(m); })
+        .catch(() => {})
+        .finally(() => { if (active) setLoading(false); });
+      return () => { active = false; };
+    }, [dateKey]),
+  );
+
   const moodMeals = meals.filter((m) => m.mood);
   const dom = moodMeals.length ? dominantMood(moodMeals) : null;
   const mood = dom ? getMoodById(dom) : null;
@@ -44,22 +62,18 @@ export default function DayViewScreen() {
         <BackButton onPress={() => router.back()} />
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 40 }}
-      >
-        <Text style={styles.eyebrow}>{wd.today ? 'TODAY' : 'DAY VIEW'}</Text>
-        <Text style={styles.title}>{wd.date}</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 40 }}>
+        <Text style={styles.eyebrow}>{isToday ? 'TODAY' : 'DAY VIEW'}</Text>
+        <Text style={styles.title}>{format(parseISO(dateKey), 'EEEE, MMMM d')}</Text>
 
         <View style={styles.moodRow}>
           {mood ? <MoodDot moodId={mood.id} size={62} /> : <View style={styles.noMoodDot} />}
           <View>
-            <Text style={styles.moodCaption}>Your mood {wd.today ? 'today' : 'this day'}</Text>
+            <Text style={styles.moodCaption}>Your mood {isToday ? 'today' : 'this day'}</Text>
             <Text style={styles.moodLabel}>{mood ? mood.label : 'Not logged yet'}</Text>
           </View>
         </View>
 
-        {/* daily macro summary — context, not the focus */}
         <View style={styles.summary}>
           {summary.map(([label, value, unit], i) => (
             <View key={label + unit} style={styles.summaryItem}>
@@ -74,22 +88,30 @@ export default function DayViewScreen() {
 
         <View style={styles.divider} />
 
-        <Text style={styles.mealsCount}>{meals.length} MEALS</Text>
-        <View style={{ gap: 12 }}>
-          {latestFirst.map((m) => (
-            <MealCard
-              key={m.id}
-              meal={m}
-              photo={64}
-              showCal={showCal}
-              onPress={() =>
-                m.mood
-                  ? router.push({ pathname: '/breakdown', params: { mode: 'meal', mealId: m.id } })
-                  : router.push({ pathname: '/mood-picker', params: { mealId: m.id } })
-              }
-            />
-          ))}
-        </View>
+        {loading ? (
+          <ActivityIndicator color={colors.ink3} style={{ marginTop: 30 }} />
+        ) : meals.length === 0 ? (
+          <Text style={styles.empty}>No meals logged this day.</Text>
+        ) : (
+          <>
+            <Text style={styles.mealsCount}>{meals.length} {meals.length === 1 ? 'MEAL' : 'MEALS'}</Text>
+            <View style={{ gap: 12 }}>
+              {latestFirst.map((m) => (
+                <MealCard
+                  key={m.id}
+                  meal={m}
+                  photo={64}
+                  showCal={showCal}
+                  onPress={() =>
+                    m.mood
+                      ? router.push({ pathname: '/breakdown', params: { mealId: m.id } })
+                      : router.push({ pathname: '/mood-picker', params: { mealId: m.id } })
+                  }
+                />
+              ))}
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -111,4 +133,5 @@ const styles = StyleSheet.create({
   summaryValue: { fontFamily: fonts.medium, color: colors.ink2 },
   divider: { height: 1, backgroundColor: colors.line, marginVertical: 20 },
   mealsCount: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3, marginBottom: 12 },
+  empty: { fontFamily: fonts.serifItalic, fontSize: 14, color: colors.ink3, textAlign: 'center', marginTop: 24 },
 });

@@ -1,54 +1,46 @@
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useCallback, useState } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import BackButton from '../components/BackButton';
 import MoodDot from '../components/MoodDot';
 import MacroBar from '../components/MacroBar';
-import { WEEK, TODAY, macroGrams, kcalOf, dayTotals, dominantMood, mealsForDay } from '../constants/data';
-import { useMeals } from '../store/meals';
+import { macroGrams, kcalOf } from '../constants/data';
+import { getMealById } from '../services/meals';
 import { useProfile } from '../store/profile';
 import { getMoodById } from '../store/moods';
 import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../constants/theme';
-import type { Macros, Meal } from '../types';
-
-function findMeal(id: string | undefined, today: Meal[]): Meal | undefined {
-  if (!id) return undefined;
-  const inToday = today.find((m) => m.id === id);
-  if (inToday) return inToday;
-  for (const d of WEEK) {
-    const m = mealsForDay(d.label).find((x) => x.id === id);
-    if (m) return m;
-  }
-  return undefined;
-}
-
-const caloriesOf = (m: { macros: Macros; calories?: number }) => m.calories ?? kcalOf(m.macros);
+import type { Meal } from '../types';
 
 export default function BreakdownScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const todayMeals = useMeals();
   const showCal = useProfile().showCalories;
-  const params = useLocalSearchParams<{ mode?: string; mealId?: string }>();
-  const isDay = params.mode === 'day';
+  const { mealId } = useLocalSearchParams<{ mealId?: string }>();
 
-  const meal = !isDay ? findMeal(params.mealId, todayMeals) : undefined;
-  const macros: Macros = isDay ? dayTotals(todayMeals) : meal?.macros ?? { protein: 0, carbs: 0, fat: 0 };
-  const calories = isDay ? todayMeals.reduce((a, m) => a + caloriesOf(m), 0) : meal ? caloriesOf(meal) : 0;
+  const [meal, setMeal] = useState<Meal | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const moodMeals = todayMeals.filter((m) => m.mood);
-  const moodId = isDay ? (moodMeals.length ? dominantMood(moodMeals) : null) : meal?.mood ?? null;
-  const mood = moodId ? getMoodById(moodId) : null;
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      (mealId ? getMealById(mealId) : Promise.resolve(null))
+        .then((m) => { if (active) setMeal(m); })
+        .catch(() => {})
+        .finally(() => { if (active) setLoading(false); });
+      return () => { active = false; };
+    }, [mealId]),
+  );
 
-  const eyebrow = isDay ? TODAY : meal?.time ?? '';
-  const title = isDay ? "Today's macros" : meal?.title ?? 'Meal';
+  const mood = meal?.mood ? getMoodById(meal.mood) : null;
+  const macros = meal?.macros ?? { protein: 0, carbs: 0, fat: 0 };
   const total = macroGrams(macros);
-  const insight = isDay
-    ? 'Your higher-protein days lean toward your energetic moods.'
-    : mood
-      ? `${mood.label} meals like this tend to sit lighter on carbs.`
-      : 'Log how this meal made you feel to start seeing patterns.';
+  const calories = meal ? meal.calories ?? kcalOf(macros) : 0;
+  const insight = mood
+    ? `${mood.label} meals like this tend to sit lighter on carbs.`
+    : 'Log how this meal made you feel to start seeing patterns.';
 
   return (
     <View style={styles.screen}>
@@ -56,57 +48,62 @@ export default function BreakdownScreen() {
         <BackButton onPress={() => router.back()} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 20, paddingBottom: 140 }}>
-        <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text>
-        <Text style={styles.title}>{title}</Text>
-
-        {/* mood + overlapping photo (single-meal views) */}
-        <View style={styles.moodRow}>
-          <View style={styles.moodOrbWrap}>
-            {mood ? <MoodDot moodId={mood.id} size={56} /> : <View style={styles.noMoodDot} />}
-            {!isDay && meal?.img ? (
-              <Image source={{ uri: meal.img }} style={styles.moodPhoto} contentFit="cover" transition={200} />
-            ) : null}
-          </View>
-          <View>
-            <Text style={styles.moodCaption}>{isDay ? 'Your mood today' : mood ? 'Logged feeling' : 'No mood yet'}</Text>
-            <Text style={styles.moodLabel}>{mood ? mood.label : 'Pending check-in'}</Text>
-          </View>
+      {loading || !meal ? (
+        <View style={styles.center}>
+          {loading ? <ActivityIndicator color={colors.ink3} /> : <Text style={styles.empty}>Meal not found.</Text>}
         </View>
+      ) : (
+        <>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 20, paddingBottom: 140 }}>
+            <Text style={styles.eyebrow}>{meal.time.toUpperCase()}</Text>
+            <Text style={styles.title}>{meal.title}</Text>
 
-        <View style={{ marginTop: 30 }}>
-          <MacroBar macros={macros} height={20} radius={radii.base} colors={macroColors} />
-          <View style={styles.barFooter}>
-            <Text style={styles.barFooterText}>{total} g total</Text>
-            {showCal && <Text style={styles.barFooterText}>{calories} cal</Text>}
-          </View>
-        </View>
-
-        <View style={{ marginTop: 26 }}>
-          {([
-            ['Protein', macros.protein, macroColors.protein],
-            ['Carbs', macros.carbs, macroColors.carbs],
-            ['Fat', macros.fat, macroColors.fat],
-          ] as [string, number, string][]).map(([label, v, c], i) => (
-            <View key={label} style={[styles.numRow, i > 0 && styles.numRowDivider]}>
-              <View style={[styles.numDot, { backgroundColor: c }]} />
-              <Text style={styles.numLabel}>{label}</Text>
-              <Text style={styles.numPct}>{total ? Math.round((v / total) * 100) : 0}%</Text>
-              <Text style={styles.numValue}>{v}<Text style={styles.numUnit}> g</Text></Text>
+            <View style={styles.moodRow}>
+              <View style={styles.moodOrbWrap}>
+                {mood ? <MoodDot moodId={mood.id} size={56} /> : <View style={styles.noMoodDot} />}
+                {meal.img ? <Image source={{ uri: meal.img }} style={styles.moodPhoto} contentFit="cover" transition={200} /> : null}
+              </View>
+              <View>
+                <Text style={styles.moodCaption}>{mood ? 'Logged feeling' : 'No mood yet'}</Text>
+                <Text style={styles.moodLabel}>{mood ? mood.label : 'Pending check-in'}</Text>
+              </View>
             </View>
-          ))}
-        </View>
 
-        <View style={styles.insight}>
-          <Text style={styles.insightText}>{insight}</Text>
-        </View>
-      </ScrollView>
+            <View style={{ marginTop: 30 }}>
+              <MacroBar macros={macros} height={20} radius={radii.base} colors={macroColors} />
+              <View style={styles.barFooter}>
+                <Text style={styles.barFooterText}>{total} g total</Text>
+                {showCal && <Text style={styles.barFooterText}>{calories} cal</Text>}
+              </View>
+            </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-        <Pressable style={styles.doneBtn} onPress={() => router.dismissAll()}>
-          <Text style={styles.doneText}>Done</Text>
-        </Pressable>
-      </View>
+            <View style={{ marginTop: 26 }}>
+              {([
+                ['Protein', macros.protein, macroColors.protein],
+                ['Carbs', macros.carbs, macroColors.carbs],
+                ['Fat', macros.fat, macroColors.fat],
+              ] as [string, number, string][]).map(([label, v, c], i) => (
+                <View key={label} style={[styles.numRow, i > 0 && styles.numRowDivider]}>
+                  <View style={[styles.numDot, { backgroundColor: c }]} />
+                  <Text style={styles.numLabel}>{label}</Text>
+                  <Text style={styles.numPct}>{total ? Math.round((v / total) * 100) : 0}%</Text>
+                  <Text style={styles.numValue}>{v}<Text style={styles.numUnit}> g</Text></Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.insight}>
+              <Text style={styles.insightText}>{insight}</Text>
+            </View>
+          </ScrollView>
+
+          <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+            <Pressable style={styles.doneBtn} onPress={() => router.dismissAll()}>
+              <Text style={styles.doneText}>Done</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
     </View>
   );
 }
@@ -114,6 +111,8 @@ export default function BreakdownScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   topBar: { paddingHorizontal: 20 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  empty: { fontFamily: fonts.regular, fontSize: 14, color: colors.ink3 },
   eyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3 },
   title: { fontFamily: fonts.light, fontSize: 27, letterSpacing: -0.4, color: colors.ink1, marginTop: 8 },
   moodRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 22 },

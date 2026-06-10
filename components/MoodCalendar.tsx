@@ -2,33 +2,38 @@ import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
-import { CAL_TODAY, MONTH_NAMES, MOODS, monthDayMood } from '../constants/data';
+import { startOfMonth, addMonths, getDaysInMonth, startOfDay, format } from 'date-fns';
+import { useMoodDays } from '../store/moodDays';
+import { getMoodById } from '../store/moods';
 import { colors, fonts, radius as radii } from '../constants/theme';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-// Monthly mood calendar — past days filled with that day's dominant mood color,
-// today ringed, future/un-logged days plain white.
-export default function MoodCalendar() {
+type Props = { onDay?: (dateKey: string) => void };
+
+// Monthly mood calendar from real logged moods. Past/today days with a logged
+// mood are filled; future and un-logged days are plain.
+export default function MoodCalendar({ onDay }: Props) {
+  const moodDays = useMoodDays();
   const [off, setOff] = useState(0);
-  const base = new Date(CAL_TODAY.y, CAL_TODAY.m + off, 1);
+  const today = new Date();
+  const todayKey = format(today, 'yyyy-MM-dd');
+  const base = addMonths(startOfMonth(today), off);
   const year = base.getFullYear();
   const month = base.getMonth();
-  const daysIn = new Date(year, month + 1, 0).getDate();
-  const lead = (new Date(year, month, 1).getDay() + 6) % 7; // Monday-first
+  const daysIn = getDaysInMonth(base);
+  const lead = (base.getDay() + 6) % 7; // Monday-first
 
   const cells: (number | null)[] = [];
   for (let i = 0; i < lead; i++) cells.push(null);
   for (let d = 1; d <= daysIn; d++) cells.push(d);
-
-  const isToday = (d: number) => year === CAL_TODAY.y && month === CAL_TODAY.m && d === CAL_TODAY.d;
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.eyebrow}>MOOD CALENDAR</Text>
       <View style={styles.nav}>
         <Arrow dir="left" onPress={() => setOff(off - 1)} />
-        <Text style={styles.monthLabel}>{MONTH_NAMES[month]} {year}</Text>
+        <Text style={styles.monthLabel}>{format(base, 'MMMM yyyy')}</Text>
         <Arrow dir="right" onPress={() => setOff(off + 1)} />
       </View>
 
@@ -40,38 +45,37 @@ export default function MoodCalendar() {
         ))}
         {cells.map((d, i) => {
           if (d === null) return <View key={`b${i}`} style={styles.cell} />;
-          const moodId = monthDayMood(year, month, d);
-          const mood = moodId ? MOODS[moodId] : null;
-          const today = isToday(d);
+          const date = new Date(year, month, d);
+          const key = format(date, 'yyyy-MM-dd');
+          const isFuture = startOfDay(date) > startOfDay(today);
+          const moodId = !isFuture ? moodDays[key] : undefined;
+          const mood = moodId ? getMoodById(moodId) : null;
+          const isToday = key === todayKey;
+          const r = Math.max(7, radii.base);
           return (
-            <View key={d} style={styles.cell}>
+            <Pressable key={d} style={styles.cell} disabled={isFuture} onPress={() => mood && onDay?.(key)}>
               <View
                 style={[
                   styles.tile,
-                  { borderRadius: Math.max(7, radii.base) },
+                  { borderRadius: r },
                   mood ? { backgroundColor: mood.color } : styles.tileEmpty,
-                  today && styles.tileToday,
+                  isToday && styles.tileToday,
                 ]}
               >
                 {mood && (
-                  <LinearGradient
-                    colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0)']}
-                    start={{ x: 0.5, y: 0 }}
-                    end={{ x: 0.5, y: 0.55 }}
-                    style={[StyleSheet.absoluteFill, { borderRadius: Math.max(7, radii.base) }]}
-                  />
+                  <LinearGradient colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.55 }} style={[StyleSheet.absoluteFill, { borderRadius: r }]} />
                 )}
                 <Text
                   style={[
                     styles.dayNum,
-                    today && styles.dayNumToday,
-                    { color: mood ? (mood.darkText ? mood.ink : '#fff') : colors.ink1 },
+                    isToday && styles.dayNumToday,
+                    { color: mood ? (mood.darkText ? mood.ink : '#fff') : isFuture ? colors.ink3 : colors.ink1 },
                   ]}
                 >
                   {d}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           );
         })}
       </View>
@@ -98,13 +102,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: `${100 / 7}%`, padding: 3, alignItems: 'center', justifyContent: 'center' },
   weekday: { fontFamily: fonts.medium, fontSize: 10, color: colors.ink3, paddingBottom: 2 },
-  tile: {
-    width: '100%',
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
+  tile: { width: '100%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   tileEmpty: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line },
   tileToday: { borderWidth: 2, borderColor: colors.ink1 },
   dayNum: { fontFamily: fonts.regular, fontSize: 12 },

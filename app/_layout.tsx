@@ -21,6 +21,7 @@ import { hydrateJournal } from '../store/journal';
 import { hydrateMoods } from '../store/moods';
 import { hydrateProfile } from '../store/profile';
 import { hydrateMeals } from '../store/meals';
+import { hydrateMoodDays } from '../store/moodDays';
 import { ensureSession } from '../services/supabase';
 import * as Notifications from 'expo-notifications';
 import '../services/notifications';
@@ -46,7 +47,7 @@ export default function RootLayout() {
 
   // Load all persisted stores once on launch, before revealing the app.
   useEffect(() => {
-    Promise.all([hydrateAuth(), hydrateJournal(), hydrateMoods(), hydrateProfile(), hydrateMeals()]).finally(() =>
+    Promise.all([hydrateAuth(), hydrateJournal(), hydrateMoods(), hydrateProfile(), hydrateMeals(), hydrateMoodDays()]).finally(() =>
       setStoresReady(true),
     );
   }, []);
