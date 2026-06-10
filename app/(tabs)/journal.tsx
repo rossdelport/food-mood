@@ -62,7 +62,7 @@ export default function JournalScreen() {
         )}
       </OrbRefresh>
 
-      <View style={[styles.newWrap, { bottom: 38 }]}>
+      <View style={[styles.newWrap, { bottom: 46 }]}>
         <Pressable style={styles.newBtn} onPress={() => router.push('/journal-entry')}>
           <PlusIcon color={colors.accentText} />
           <Text style={styles.newText}>New Entry</Text>

@@ -109,6 +109,47 @@ export function InfoIcon({ color, size = 16 }: IconProps) {
   );
 }
 
+// ── Filled variants (active tab) ─────────────────────────────
+export function HomeFilledIcon({ color, size = 23 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M11.3 3.35a1 1 0 0 1 1.4 0l8.3 7.45c.21.19.32.45.32.73V20a1 1 0 0 1-1 1h-4.82v-5.1a1 1 0 0 0-1-1h-2.4a1 1 0 0 0-1 1V21H4a1 1 0 0 1-1-1v-8.47c0-.28.11-.54.32-.73l8-7.45z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+export function MoodsFilledIcon({ color, size = 23 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle cx={9.2} cy={9.6} r={3.2} fill={color} />
+      <Circle cx={14.8} cy={9.6} r={3.2} fill={color} />
+      <Circle cx={12} cy={14.6} r={3.2} fill={color} />
+    </Svg>
+  );
+}
+
+export function JournalFilledIcon({ color, size = 23 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M6 5.5A1.5 1.5 0 0 1 7.5 4H18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7.5A1.5 1.5 0 0 1 6 18.5v-13z" fill={color} />
+      <Path d="M11.5 8.5h4M11.5 12h4" stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+      <Path d="M9 4v16" stroke="#FFFFFF" strokeWidth={1.3} />
+    </Svg>
+  );
+}
+
+export function ProfileFilledIcon({ color, size = 23 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle cx={12} cy={8.2} r={3.7} fill={color} />
+      <Path d="M5.6 19.8a6.4 6.4 0 0 1 12.8 0 1 1 0 0 1-1 1.1H6.6a1 1 0 0 1-1-1.1z" fill={color} />
+    </Svg>
+  );
+}
+
 export function CameraIcon({ color = '#F3EFE9', size = 22 }: { color?: string; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
