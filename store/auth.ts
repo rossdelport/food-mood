@@ -1,45 +1,64 @@
-// Auth/session store, persisted to AsyncStorage so sign-in survives restarts.
+// Auth/session store backed by Supabase email + password auth. The Supabase
+// client persists the session to AsyncStorage, so sign-in survives restarts
+// (auto-login). `signedIn` reflects a real account session.
 import { useSyncExternalStore } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from '../services/supabase';
 
-const KEY = 'foodmood:auth:signedIn';
-
-let signedIn = false;
+let session: Session | null = null;
 let hydrated = false;
+let subscribed = false;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
 
-// Load persisted auth state once on app start.
+const isReal = (s: Session | null) => !!s && !s.user.is_anonymous;
+
+// Load the persisted session once on launch, then keep it in sync.
 export async function hydrateAuth() {
   try {
-    const v = await AsyncStorage.getItem(KEY);
-    if (v === '1') signedIn = true;
+    const { data } = await supabase.auth.getSession();
+    session = data.session;
   } catch {
-    // ignore read errors — fall back to signed-out
+    // signed-out fallback
   } finally {
     hydrated = true;
     emit();
   }
+  if (!subscribed) {
+    subscribed = true;
+    supabase.auth.onAuthStateChange((_event, s) => { session = s; emit(); });
+  }
 }
 
 export function useAuth(): boolean {
-  return useSyncExternalStore(subscribe, () => signedIn);
+  return useSyncExternalStore(subscribe, () => isReal(session));
 }
 
-// True once persisted state has been loaded — gate logic should wait for this.
 export function useAuthHydrated(): boolean {
   return useSyncExternalStore(subscribe, () => hydrated);
 }
 
-export function signIn() {
-  signedIn = true;
-  AsyncStorage.setItem(KEY, '1').catch(() => {});
-  emit();
+export function useUserEmail(): string | null {
+  return useSyncExternalStore(subscribe, () => session?.user.email ?? null);
 }
 
-export function signOut() {
-  signedIn = false;
-  AsyncStorage.removeItem(KEY).catch(() => {});
+// Create an account. Returns an error message, plus whether a session was
+// established (false means the project still requires email confirmation).
+export async function signUpEmail(email: string, password: string): Promise<{ error?: string; session: boolean }> {
+  const { data, error } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password });
+  if (error) return { error: error.message, session: false };
+  return { session: !!data.session };
+}
+
+// Sign in to an existing account. Returns an error message or null on success.
+export async function signInEmail(email: string, password: string): Promise<string | null> {
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+  return error ? error.message : null;
+}
+
+export async function signOutAuth(): Promise<void> {
+  try { await supabase.auth.signOut(); } catch { /* ignore */ }
+  session = null;
   emit();
 }

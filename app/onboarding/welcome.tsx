@@ -4,16 +4,11 @@ import OnbShell from '../../components/onboarding/OnbShell';
 import OnbButton from '../../components/onboarding/OnbButton';
 import OnbLogo from '../../components/onboarding/OnbLogo';
 import DriftingSpectrum from '../../components/onboarding/DriftingSpectrum';
-import { signIn } from '../../store/auth';
 import { colors, fonts } from '../../constants/theme';
 
 export default function Welcome() {
   const router = useRouter();
-  const haveAccount = () => {
-    signIn();
-    if (router.canDismiss()) router.dismissAll();
-    router.replace('/');
-  };
+  const haveAccount = () => router.push('/onboarding/login');
   return (
     <OnbShell
       back={false}

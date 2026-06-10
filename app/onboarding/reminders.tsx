@@ -10,7 +10,7 @@ import { colors, fonts } from '../../constants/theme';
 export default function Reminders() {
   const router = useRouter();
   const mins = useProfile().notif.mins;
-  const next = () => router.push('/onboarding/ready');
+  const next = () => router.push('/onboarding/account');
 
   return (
     <OnbShell idx={5} total={6} skip onSkip={next} footer={<OnbButton label="Continue" onPress={next} />}>

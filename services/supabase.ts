@@ -22,14 +22,9 @@ AppState.addEventListener('change', (state) => {
   else supabase.auth.stopAutoRefresh();
 });
 
-// Ensure there's a session. Uses anonymous sign-in so onboarding has no login wall.
+// Returns the current signed-in user's id (or null). The app gates on a real
+// account, so callers can treat null as "not signed in".
 export async function ensureSession(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
-  if (data.session) return data.session.user.id;
-  const { data: anon, error } = await supabase.auth.signInAnonymously();
-  if (error) {
-    console.warn('Anonymous sign-in failed:', error.message);
-    return null;
-  }
-  return anon.user?.id ?? null;
+  return data.session?.user.id ?? null;
 }

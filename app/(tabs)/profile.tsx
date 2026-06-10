@@ -11,7 +11,7 @@ import { EditIcon, ChevronRightIcon, CameraIcon } from '../../components/NavIcon
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { useProfile, updateProfile, updateTarget, updateNotif, resetProfile } from '../../store/profile';
-import { signOut } from '../../store/auth';
+import { signOutAuth, useUserEmail } from '../../store/auth';
 import { deleteAccount } from '../../services/account';
 import { refreshMeals } from '../../store/meals';
 import { refreshMoodDays } from '../../store/moodDays';
@@ -43,10 +43,16 @@ export default function ProfileScreen() {
     resetProfile();
     await refreshMeals();
     await refreshMoodDays();
-    signOut(); // gates back to onboarding
+    await signOutAuth(); // gates back to onboarding
   };
 
+  const email = useUserEmail();
   const initial = (profile.name || '?').trim().charAt(0).toUpperCase() || '?';
+
+  const onLogout = async () => {
+    await signOutAuth();
+    await Promise.all([refreshMeals(), refreshMoodDays()]);
+  };
 
   const pickAvatar = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -111,6 +117,7 @@ export default function ProfileScreen() {
               <Text style={[styles.tagline, !profile.tagline && styles.taglinePlaceholder]}>{profile.tagline || 'Add a tagline'}</Text>
             </Pressable>
           )}
+          {email && <Text style={styles.email}>{email}</Text>}
         </View>
 
         {/* macro goals */}
@@ -177,7 +184,7 @@ export default function ProfileScreen() {
 
         {/* account */}
         <SectionCard title="Account">
-          <Pressable style={styles.outlineBtn} onPress={() => signOut()}>
+          <Pressable style={styles.outlineBtn} onPress={onLogout}>
             <Text style={styles.outlineBtnText}>Log Out</Text>
           </Pressable>
           <Pressable style={[styles.outlineBtn, styles.dangerBtn]} onPress={() => setConfirmDel(true)}>
@@ -249,6 +256,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.regular, fontSize: 23, letterSpacing: -0.3, color: colors.ink1 },
   nameInput: { marginTop: 16, textAlign: 'center', fontFamily: fonts.regular, fontSize: 23, color: colors.ink1, borderBottomWidth: 1, borderBottomColor: colors.line, width: 200, paddingVertical: 2 },
   tagline: { fontFamily: fonts.regular, fontSize: 14.5, color: colors.ink3, marginTop: 6 },
+  email: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.ink3, marginTop: 8, opacity: 0.8 },
   taglinePlaceholder: { fontFamily: fonts.serifItalic },
   tagInput: { marginTop: 7, textAlign: 'center', fontFamily: fonts.regular, fontSize: 14.5, color: colors.ink2, borderBottomWidth: 1, borderBottomColor: colors.line, width: 220, paddingVertical: 2 },
   sectionTitle: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.2, color: colors.ink3, marginBottom: 6, marginLeft: 2 },
