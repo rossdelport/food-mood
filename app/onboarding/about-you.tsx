@@ -26,7 +26,7 @@ export default function AboutYou() {
   };
 
   return (
-    <OnbShell idx={1} total={6} skip onSkip={next} footer={<OnbButton label="Continue" onPress={next} />}>
+    <OnbShell idx={1} total={6} footer={<OnbButton label="Continue" onPress={next} />}>
       <View style={styles.head}>
         <Text style={styles.h1}>A little about you</Text>
         <Text style={styles.sub}>This stays private. It just helps Food Mood feel like yours.</Text>

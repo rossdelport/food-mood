@@ -13,7 +13,7 @@ export default function Reminders() {
   const next = () => router.push('/onboarding/account');
 
   return (
-    <OnbShell idx={5} total={6} skip onSkip={next} footer={<OnbButton label="Continue" onPress={next} />}>
+    <OnbShell idx={5} total={6} footer={<OnbButton label="Continue" onPress={next} />}>
       <View style={styles.head}>
         <Text style={styles.h1}>When should we check in?</Text>
         <Text style={styles.sub}>We'll send one gentle nudge after a meal to capture how you feel.</Text>

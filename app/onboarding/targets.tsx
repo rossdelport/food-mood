@@ -25,7 +25,7 @@ export default function Targets() {
   ];
 
   return (
-    <OnbShell idx={4} total={6} skip onSkip={next} footer={<OnbButton label="Continue" onPress={next} />}>
+    <OnbShell idx={4} total={6} footer={<OnbButton label="Continue" onPress={next} />}>
       <Pressable style={styles.dismiss} onPress={Keyboard.dismiss}>
       <View style={styles.head}>
         <Text style={styles.h1}>Set your targets</Text>
