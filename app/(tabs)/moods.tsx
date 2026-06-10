@@ -29,8 +29,7 @@ export default function MoodsScreen() {
 
   return (
     <View style={styles.screen}>
-      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 120 }}>
-        <Text style={styles.eyebrow}>MANAGE</Text>
+      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 34, paddingBottom: insets.bottom + 120 }}>
         <Text style={styles.title}>Moods</Text>
         <Text style={styles.intro}>
           Your moods are the feelings you choose from after a meal. Make them yours. Rename, recolour, add new ones, or remove what doesn't fit.
@@ -146,8 +145,7 @@ export default function MoodsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  eyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3 },
-  title: { fontFamily: fonts.light, fontSize: 30, letterSpacing: -0.4, color: colors.ink1, marginTop: 8 },
+  title: { fontFamily: fonts.light, fontSize: 30, letterSpacing: -0.4, color: colors.ink1 },
   intro: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 21, color: colors.ink2, marginTop: 10 },
   notif: { flexDirection: 'row', gap: 11, alignItems: 'center', backgroundColor: colors.chip, borderRadius: radii.base + 8, padding: 12, marginTop: 18 },
   notifIcon: { width: 34, height: 34, borderRadius: 9, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },

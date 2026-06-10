@@ -62,8 +62,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 120 }}>
-        <Text style={styles.eyebrow}>ACCOUNT</Text>
+      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 34, paddingBottom: insets.bottom + 120 }}>
         <Text style={styles.headerTitle}>Profile</Text>
         <Text style={styles.intro}>Your photo, name, daily goals, and how Food Mood checks in with you.</Text>
 
@@ -238,8 +237,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  eyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3 },
-  headerTitle: { fontFamily: fonts.light, fontSize: 30, letterSpacing: -0.4, color: colors.ink1, marginTop: 8 },
+  headerTitle: { fontFamily: fonts.light, fontSize: 30, letterSpacing: -0.4, color: colors.ink1 },
   intro: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 21, color: colors.ink2, marginTop: 10 },
   userCard: { alignItems: 'center', marginTop: 34 },
   avatarWrap: { width: 96, height: 96 },
