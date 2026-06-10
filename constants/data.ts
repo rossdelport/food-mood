@@ -105,11 +105,12 @@ export function dayTotals(meals: Meal[]): Macros {
   );
 }
 
-// dominant mood = most frequent (ties → first logged)
+// dominant mood = most frequent (ties → first logged). Ignores meals with no mood.
 export function dominantMood(meals: Meal[]): string {
   const count: Record<string, number> = {};
-  meals.forEach((m) => { count[m.mood] = (count[m.mood] || 0) + 1; });
-  return meals.map((m) => m.mood).sort((a, b) => count[b] - count[a])[0];
+  meals.forEach((m) => { if (m.mood) count[m.mood] = (count[m.mood] || 0) + 1; });
+  const withMood = meals.map((m) => m.mood).filter((x): x is string => !!x);
+  return withMood.sort((a, b) => count[b] - count[a])[0];
 }
 
 // hex + alpha → rgba() string

@@ -7,15 +7,34 @@ import BackButton from '../components/BackButton';
 import { CheckIcon } from '../components/NavIcons';
 import { hexA } from '../constants/data';
 import { useMoods } from '../store/moods';
+import { setMealMood } from '../services/meals';
+import { refreshMeals } from '../store/meals';
 import { colors, fonts, radius as radii, buttonShadow } from '../constants/theme';
 
-// Post-capture: pick how a meal left you feeling.
+// Post-meal reminder: log how a captured meal left you feeling.
 export default function MoodPickerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { img } = useLocalSearchParams<{ img?: string }>();
+  const { mealId } = useLocalSearchParams<{ mealId?: string }>();
   const moods = useMoods();
   const [sel, setSel] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const onContinue = async () => {
+    if (!sel || saving) return;
+    setSaving(true);
+    try {
+      if (mealId) {
+        await setMealMood(mealId, sel);
+        await refreshMeals();
+        router.replace({ pathname: '/breakdown', params: { mode: 'meal', mealId } });
+        return;
+      }
+      router.back();
+    } catch {
+      setSaving(false);
+    }
+  };
 
   const selMood = moods.find((m) => m.id === sel);
   const tint = selMood ? selMood.color : null;
@@ -93,11 +112,8 @@ export default function MoodPickerScreen() {
         pointerEvents={sel ? 'auto' : 'none'}
       >
         <LinearGradient colors={['transparent', colors.bg]} locations={[0, 0.5]} style={StyleSheet.absoluteFill} />
-        <Pressable
-          style={styles.continueBtn}
-          onPress={() => sel && router.push({ pathname: '/breakdown', params: { mode: 'new', mood: sel, img: img ?? '' } })}
-        >
-          <Text style={styles.continueText}>Continue</Text>
+        <Pressable style={styles.continueBtn} onPress={onContinue} disabled={saving}>
+          <Text style={styles.continueText}>{saving ? 'Saving…' : 'Continue'}</Text>
         </Pressable>
       </Animated.View>
     </View>

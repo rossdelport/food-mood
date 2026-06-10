@@ -4,9 +4,10 @@
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
-// Model for the vision -> macros task. Opus is the default; for this constrained
-// extraction, claude-haiku-4-5 is ~5x cheaper and well-suited — swap if desired.
-const MODEL = "claude-opus-4-8";
+// Model for the vision -> macros task. Haiku 4.5: fast + cheap, well-suited to
+// this constrained extraction. Swap to claude-sonnet-4-6 / claude-opus-4-8 for
+// more capability at higher cost.
+const MODEL = "claude-haiku-4-5";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

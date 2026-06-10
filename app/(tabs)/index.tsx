@@ -1,15 +1,19 @@
+import { useCallback } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import MoodDot from '../../components/MoodDot';
 import MealCard from '../../components/MealCard';
 import WeekSpectrum from '../../components/WeekSpectrum';
 import MoodCalendar from '../../components/MoodCalendar';
 import { colors, fonts } from '../../constants/theme';
 import { TODAY, WEEK, dayTotals, dominantMood, kcalOf } from '../../constants/data';
-import { useMeals } from '../../store/meals';
+import { useMeals, refreshMeals } from '../../store/meals';
 import { useProfile } from '../../store/profile';
 import { getMoodById } from '../../store/moods';
+
+const caloriesOf = (m: { macros: { protein: number; carbs: number; fat: number }; calories?: number }) =>
+  m.calories ?? kcalOf(m.macros);
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -17,13 +21,17 @@ export default function HomeScreen() {
   const meals = useMeals();
   const showCal = useProfile().showCalories;
 
+  // Keep today's feed fresh when returning from capture / mood logging.
+  useFocusEffect(useCallback(() => { refreshMeals(); }, []));
+
   const totals = dayTotals(meals);
-  const dom = meals.length ? dominantMood(meals) : 'calm';
-  const domLabel = getMoodById(dom)?.label ?? '';
+  const moodMeals = meals.filter((m) => m.mood);
+  const dom = moodMeals.length ? dominantMood(moodMeals) : null;
+  const domLabel = dom ? getMoodById(dom)?.label ?? '' : '';
   const todayLabel = WEEK.find((d) => d.today)?.label ?? 'T';
 
   const totalsRow: [string, number, string][] = [
-    ...(showCal ? ([['Cal', meals.reduce((a, m) => a + kcalOf(m.macros), 0), '']] as [string, number, string][]) : []),
+    ...(showCal ? ([['Cal', meals.reduce((a, m) => a + caloriesOf(m), 0), '']] as [string, number, string][]) : []),
     ['Protein', totals.protein, 'g'],
     ['Carbs', totals.carbs, 'g'],
     ['Fat', totals.fat, 'g'],
@@ -39,10 +47,12 @@ export default function HomeScreen() {
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <View style={styles.headerTop}>
             <Text style={styles.eyebrow}>TODAY</Text>
-            <Pressable style={styles.moodPill} onPress={() => router.push({ pathname: '/day', params: { day: todayLabel } })}>
-              <MoodDot moodId={dom} size={18} ring={false} />
-              <Text style={styles.moodPillText}>Mostly {domLabel.toLowerCase()}</Text>
-            </Pressable>
+            {dom && (
+              <Pressable style={styles.moodPill} onPress={() => router.push({ pathname: '/day', params: { day: todayLabel } })}>
+                <MoodDot moodId={dom} size={18} ring={false} />
+                <Text style={styles.moodPillText}>Mostly {domLabel.toLowerCase()}</Text>
+              </Pressable>
+            )}
           </View>
 
           <Text style={styles.date}>{TODAY}</Text>
@@ -66,6 +76,9 @@ export default function HomeScreen() {
 
         {/* meal feed */}
         <View style={styles.feed}>
+          {meals.length === 0 && (
+            <Text style={styles.empty}>No meals yet today. Tap the camera to capture your first one.</Text>
+          )}
           <View style={{ gap: 10 }}>
             {meals.map((m) => (
               <MealCard
@@ -107,4 +120,5 @@ const styles = StyleSheet.create({
   totalLabel: { fontFamily: fonts.regular, fontSize: 10, letterSpacing: 1, color: colors.ink3, marginTop: 1 },
   divider: { height: 1, backgroundColor: colors.line, marginHorizontal: 24 },
   feed: { paddingHorizontal: 16, paddingTop: 14 },
+  empty: { fontFamily: fonts.serifItalic, fontSize: 14, lineHeight: 21, color: colors.ink3, textAlign: 'center', paddingVertical: 30, paddingHorizontal: 24 },
 });

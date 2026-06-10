@@ -28,7 +28,7 @@ export default function MealCard({
       onPress={() => onPress?.(meal)}
       style={({ pressed }) => [styles.card, pressed && { transform: [{ scale: 0.985 }] }]}
     >
-      <MoodDot moodId={meal.mood} size={41} />
+      {meal.mood ? <MoodDot moodId={meal.mood} size={41} /> : <View style={styles.pendingDot} />}
       <Pressable
         onPress={onPressPhoto ? () => onPressPhoto(meal) : undefined}
         style={[styles.photoWrap, { width: photo, height: photo }]}
@@ -74,6 +74,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
   },
+  pendingDot: { width: 41, height: 41, borderRadius: 20.5, backgroundColor: colors.chip, borderWidth: 1, borderColor: colors.line, borderStyle: 'dashed' },
   photoWrap: {
     flexShrink: 0,
     borderRadius: radii.base,

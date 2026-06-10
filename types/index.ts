@@ -19,10 +19,22 @@ export type Meal = {
   id: string;
   title: string;
   time: string;
-  mood: string; // mood id
-  img: string;
+  mood: string | null; // mood id; null until the user logs how it made them feel
+  img: string; // displayable URL (signed for Supabase photos)
   macros: Macros;
+  calories?: number; // stored from vision; falls back to derived kcal
+  capturedAt?: number; // epoch ms
   slot?: string;
+};
+
+// A meal's macros as detected by the vision model.
+export type DetectedMeal = {
+  title: string;
+  protein: number;
+  carbs: number;
+  fat: number;
+  calories: number;
+  confidence?: 'high' | 'medium' | 'low';
 };
 
 export type WeekDay = {

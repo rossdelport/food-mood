@@ -1,22 +1,17 @@
-import { useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import BackButton from '../components/BackButton';
 import MoodDot from '../components/MoodDot';
 import MacroBar from '../components/MacroBar';
-import { WEEK, MOODS, TODAY, macroGrams, kcalOf, dayTotals, dominantMood, mealsForDay } from '../constants/data';
-import { detectMacros } from '../services/vision';
-import { useMeals, addMeal } from '../store/meals';
+import { WEEK, TODAY, macroGrams, kcalOf, dayTotals, dominantMood, mealsForDay } from '../constants/data';
+import { useMeals } from '../store/meals';
 import { useProfile } from '../store/profile';
 import { getMoodById } from '../store/moods';
-import { saveEntry } from '../store/journal';
-import { fmtDate, nowTime } from '../constants/journalData';
 import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../constants/theme';
 import type { Macros, Meal } from '../types';
 
-// Find a meal by id across today's logged meals and the mock per-day builder.
 function findMeal(id: string | undefined, today: Meal[]): Meal | undefined {
   if (!id) return undefined;
   const inToday = today.find((m) => m.id === id);
@@ -28,60 +23,32 @@ function findMeal(id: string | undefined, today: Meal[]): Meal | undefined {
   return undefined;
 }
 
+const caloriesOf = (m: { macros: Macros; calories?: number }) => m.calories ?? kcalOf(m.macros);
+
 export default function BreakdownScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const todayMeals = useMeals();
   const showCal = useProfile().showCalories;
-  const params = useLocalSearchParams<{ mode?: string; mealId?: string; mood?: string; img?: string }>();
-  const mode = params.mode ?? 'meal';
-  const isDay = mode === 'day';
-  const isNew = mode === 'new';
+  const params = useLocalSearchParams<{ mode?: string; mealId?: string }>();
+  const isDay = params.mode === 'day';
 
-  const meal = !isDay && !isNew ? findMeal(params.mealId, todayMeals) : undefined;
-  const img = isNew ? params.img || undefined : meal?.img;
+  const meal = !isDay ? findMeal(params.mealId, todayMeals) : undefined;
+  const macros: Macros = isDay ? dayTotals(todayMeals) : meal?.macros ?? { protein: 0, carbs: 0, fat: 0 };
+  const calories = isDay ? todayMeals.reduce((a, m) => a + caloriesOf(m), 0) : meal ? caloriesOf(meal) : 0;
 
-  // macros: tapped meal -> known; day -> totals; new capture -> detected (async).
-  const [detected, setDetected] = useState<Macros | null>(null);
-  useEffect(() => {
-    if (isNew && img) detectMacros(img).then(setDetected);
-  }, [isNew, img]);
+  const moodMeals = todayMeals.filter((m) => m.mood);
+  const moodId = isDay ? (moodMeals.length ? dominantMood(moodMeals) : null) : meal?.mood ?? null;
+  const mood = moodId ? getMoodById(moodId) : null;
 
-  const macros: Macros | null = isDay
-    ? dayTotals(todayMeals)
-    : isNew
-      ? detected
-      : meal?.macros ?? null;
-
-  const moodId = params.mood || (isDay ? dominantMood(todayMeals) : meal?.mood) || 'calm';
-  const mood = getMoodById(moodId) ?? MOODS.calm;
-
-  const [note, setNote] = useState('');
-
-  const eyebrow = isDay ? TODAY : isNew ? 'Just now' : meal?.time ?? '';
-  const title = isDay ? "Today's macros" : isNew ? 'Your meal' : meal?.title ?? '';
+  const eyebrow = isDay ? TODAY : meal?.time ?? '';
+  const title = isDay ? "Today's macros" : meal?.title ?? 'Meal';
+  const total = macroGrams(macros);
   const insight = isDay
     ? 'Your higher-protein days lean toward your energetic moods.'
-    : `${mood.label} meals like this tend to sit lighter on carbs.`;
-
-  const finish = () => {
-    if (isNew) {
-      // Save the captured meal to today's feed, and the note to the journal.
-      if (detected) {
-        const time = nowTime();
-        addMeal({ id: `meal-${Date.now().toString(36)}`, title: 'Logged meal', time, mood: moodId, img: img ?? '', macros: detected });
-      }
-      if (note.trim()) {
-        const ts = Date.now();
-        saveEntry({ id: `j${ts.toString(36)}`, ts, updatedAt: ts, moodId, link: null, text: note, date: fmtDate(ts), time: nowTime() });
-      }
-      router.dismissAll();
-    } else {
-      router.back();
-    }
-  };
-  const canFinish = !isNew || !!detected;
-  const buttonLabel = isNew ? (note.trim() ? 'Save & Done' : 'Done') : isDay ? 'Done' : 'Back to journal';
+    : mood
+      ? `${mood.label} meals like this tend to sit lighter on carbs.`
+      : 'Log how this meal made you feel to start seeing patterns.';
 
   return (
     <View style={styles.screen}>
@@ -89,90 +56,55 @@ export default function BreakdownScreen() {
         <BackButton onPress={() => router.back()} />
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 20, paddingBottom: 140 }}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 20, paddingBottom: 140 }}>
         <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text>
         <Text style={styles.title}>{title}</Text>
 
-        {/* mood indicator (+ overlapping photo on single-meal views) */}
+        {/* mood + overlapping photo (single-meal views) */}
         <View style={styles.moodRow}>
           <View style={styles.moodOrbWrap}>
-            <MoodDot moodId={moodId} size={56} />
-            {!isDay && img && (
-              <Image source={{ uri: img }} style={styles.moodPhoto} contentFit="cover" transition={200} />
-            )}
+            {mood ? <MoodDot moodId={mood.id} size={56} /> : <View style={styles.noMoodDot} />}
+            {!isDay && meal?.img ? (
+              <Image source={{ uri: meal.img }} style={styles.moodPhoto} contentFit="cover" transition={200} />
+            ) : null}
           </View>
           <View>
-            <Text style={styles.moodCaption}>{isDay ? 'Your mood today' : 'Logged feeling'}</Text>
-            <Text style={styles.moodLabel}>{mood.label}</Text>
+            <Text style={styles.moodCaption}>{isDay ? 'Your mood today' : mood ? 'Logged feeling' : 'No mood yet'}</Text>
+            <Text style={styles.moodLabel}>{mood ? mood.label : 'Pending check-in'}</Text>
           </View>
         </View>
 
-        {/* stacked bar */}
         <View style={{ marginTop: 30 }}>
-          {macros ? (
-            <>
-              <MacroBar macros={macros} height={20} radius={radii.base} colors={macroColors} />
-              <View style={styles.barFooter}>
-                <Text style={styles.barFooterText}>{macroGrams(macros)} g total</Text>
-                {showCal && <Text style={styles.barFooterText}>{kcalOf(macros)} cal</Text>}
-              </View>
-            </>
-          ) : (
-            <View style={styles.loading}>
-              <ActivityIndicator color={colors.ink3} />
-              <Text style={styles.loadingText}>Reading macros…</Text>
-            </View>
-          )}
+          <MacroBar macros={macros} height={20} radius={radii.base} colors={macroColors} />
+          <View style={styles.barFooter}>
+            <Text style={styles.barFooterText}>{total} g total</Text>
+            {showCal && <Text style={styles.barFooterText}>{calories} cal</Text>}
+          </View>
         </View>
 
-        {/* numeric breakdown */}
-        {macros && (
-          <View style={{ marginTop: 26 }}>
-            {([
-              ['Protein', macros.protein, macroColors.protein],
-              ['Carbs', macros.carbs, macroColors.carbs],
-              ['Fat', macros.fat, macroColors.fat],
-            ] as [string, number, string][]).map(([label, v, c], i) => (
-              <View key={label} style={[styles.numRow, i > 0 && styles.numRowDivider]}>
-                <View style={[styles.numDot, { backgroundColor: c }]} />
-                <Text style={styles.numLabel}>{label}</Text>
-                <Text style={styles.numPct}>{Math.round((v / macroGrams(macros)) * 100)}%</Text>
-                <Text style={styles.numValue}>{v}<Text style={styles.numUnit}> g</Text></Text>
-              </View>
-            ))}
-          </View>
-        )}
+        <View style={{ marginTop: 26 }}>
+          {([
+            ['Protein', macros.protein, macroColors.protein],
+            ['Carbs', macros.carbs, macroColors.carbs],
+            ['Fat', macros.fat, macroColors.fat],
+          ] as [string, number, string][]).map(([label, v, c], i) => (
+            <View key={label} style={[styles.numRow, i > 0 && styles.numRowDivider]}>
+              <View style={[styles.numDot, { backgroundColor: c }]} />
+              <Text style={styles.numLabel}>{label}</Text>
+              <Text style={styles.numPct}>{total ? Math.round((v / total) * 100) : 0}%</Text>
+              <Text style={styles.numValue}>{v}<Text style={styles.numUnit}> g</Text></Text>
+            </View>
+          ))}
+        </View>
 
-        {/* insight */}
         <View style={styles.insight}>
           <Text style={styles.insightText}>{insight}</Text>
         </View>
-
-        {/* journal note — only when logging a freshly captured meal */}
-        {isNew && (
-          <View style={{ marginTop: 22 }}>
-            <Text style={styles.noteEyebrow}>ADD A NOTE <Text style={styles.noteOptional}>· optional</Text></Text>
-            <TextInput
-              value={note}
-              onChangeText={setNote}
-              placeholder="What did this meal leave you feeling?"
-              placeholderTextColor={colors.ink3}
-              multiline
-              style={styles.noteInput}
-            />
-            <Text style={styles.noteHint}>Saved to your journal with this mood.</Text>
-          </View>
-        )}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-        <Pressable style={[styles.doneBtn, !canFinish && { opacity: 0.5 }]} onPress={finish} disabled={!canFinish}>
-          <Text style={styles.doneText}>{buttonLabel}</Text>
+        <Pressable style={styles.doneBtn} onPress={() => router.dismissAll()}>
+          <Text style={styles.doneText}>Done</Text>
         </Pressable>
       </View>
     </View>
@@ -186,20 +118,12 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.light, fontSize: 27, letterSpacing: -0.4, color: colors.ink1, marginTop: 8 },
   moodRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 22 },
   moodOrbWrap: { flexDirection: 'row', alignItems: 'center' },
-  moodPhoto: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    marginLeft: -14,
-    borderWidth: 2,
-    borderColor: colors.bg,
-  },
+  noMoodDot: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.chip, borderWidth: 1, borderColor: colors.line, borderStyle: 'dashed' },
+  moodPhoto: { width: 56, height: 56, borderRadius: 28, marginLeft: -14, borderWidth: 2, borderColor: colors.bg },
   moodCaption: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.ink3 },
   moodLabel: { fontFamily: fonts.regular, fontSize: 18, color: colors.ink1, marginTop: 2 },
   barFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   barFooterText: { fontFamily: fonts.regular, fontSize: 11, color: colors.ink3 },
-  loading: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-  loadingText: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink3 },
   numRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
   numRowDivider: { borderTopWidth: 1, borderTopColor: colors.line },
   numDot: { width: 9, height: 9, borderRadius: 4.5 },
@@ -209,23 +133,6 @@ const styles = StyleSheet.create({
   numUnit: { fontFamily: fonts.regular, fontSize: 12, color: colors.ink3 },
   insight: { marginTop: 24, paddingVertical: 16, paddingHorizontal: 18, backgroundColor: colors.chip, borderRadius: radii.button },
   insightText: { fontFamily: fonts.serifItalic, fontSize: 16, lineHeight: 24, color: colors.ink2 },
-  noteEyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2, color: colors.ink3, marginBottom: 8 },
-  noteOptional: { fontFamily: fonts.regular, letterSpacing: 0 },
-  noteInput: {
-    minHeight: 92,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-    borderRadius: radii.button,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontFamily: fonts.serifItalic,
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.ink1,
-    textAlignVertical: 'top',
-  },
-  noteHint: { fontFamily: fonts.regular, fontSize: 11.5, color: colors.ink3, marginTop: 8, marginHorizontal: 2 },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 12, backgroundColor: colors.bg },
   doneBtn: { backgroundColor: colors.accent, borderRadius: radii.button, paddingVertical: 17, alignItems: 'center', ...buttonShadow },
   doneText: { fontFamily: fonts.medium, fontSize: 15.5, letterSpacing: 0.2, color: colors.accentText },

@@ -21,10 +21,12 @@ export default function DayViewScreen() {
 
   const wd = WEEK.find((d) => d.label === day) ?? WEEK.find((d) => d.today) ?? WEEK[1];
   const meals = wd.today ? todayMeals : mealsForDay(wd.label);
-  const dom = meals.length ? dominantMood(meals) : 'calm';
-  const mood = getMoodById(dom) ?? getMoodById('calm')!;
+  const moodMeals = meals.filter((m) => m.mood);
+  const dom = moodMeals.length ? dominantMood(moodMeals) : null;
+  const mood = dom ? getMoodById(dom) : null;
+  const tintColor = mood?.color ?? colors.chip;
   const totals = dayTotals(meals);
-  const totalCal = meals.reduce((a, m) => a + kcalOf(m.macros), 0);
+  const totalCal = meals.reduce((a, m) => a + (m.calories ?? kcalOf(m.macros)), 0);
   const latestFirst = meals.slice().reverse();
 
   const summary: [string, number, string][] = [
@@ -36,7 +38,7 @@ export default function DayViewScreen() {
 
   return (
     <View style={styles.screen}>
-      <LinearGradient colors={[hexA(mood.color, 0.16), colors.bg]} locations={[0, 0.42]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[hexA(tintColor, 0.16), colors.bg]} locations={[0, 0.42]} style={StyleSheet.absoluteFill} />
 
       <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
         <BackButton onPress={() => router.back()} />
@@ -50,10 +52,10 @@ export default function DayViewScreen() {
         <Text style={styles.title}>{wd.date}</Text>
 
         <View style={styles.moodRow}>
-          <MoodDot moodId={dom} size={62} />
+          {mood ? <MoodDot moodId={mood.id} size={62} /> : <View style={styles.noMoodDot} />}
           <View>
             <Text style={styles.moodCaption}>Your mood {wd.today ? 'today' : 'this day'}</Text>
-            <Text style={styles.moodLabel}>{mood.label}</Text>
+            <Text style={styles.moodLabel}>{mood ? mood.label : 'Not logged yet'}</Text>
           </View>
         </View>
 
@@ -95,6 +97,7 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3 },
   title: { fontFamily: fonts.light, fontSize: 27, letterSpacing: -0.4, color: colors.ink1, marginTop: 8 },
   moodRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 20 },
+  noMoodDot: { width: 62, height: 62, borderRadius: 31, backgroundColor: colors.chip, borderWidth: 1, borderColor: colors.line, borderStyle: 'dashed' },
   moodCaption: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.ink3 },
   moodLabel: { fontFamily: fonts.regular, fontSize: 20, color: colors.ink1, marginTop: 2 },
   summary: { flexDirection: 'row', alignItems: 'center', marginTop: 22 },

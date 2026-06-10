@@ -18,7 +18,7 @@ export default function CameraScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [busy, setBusy] = useState(false);
 
-  const goToMood = (uri: string) => router.replace({ pathname: '/mood-picker', params: { img: uri } });
+  const goToMood = (uri: string) => router.replace({ pathname: '/meal-capture', params: { img: uri } });
 
   const takePhoto = async () => {
     if (busy) return;

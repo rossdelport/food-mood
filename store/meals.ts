@@ -1,34 +1,42 @@
-// Today's logged meals, persisted to AsyncStorage. Seeded with the mock day.
+// Today's meals, backed by Supabase. Reactive via useSyncExternalStore.
 import { useSyncExternalStore } from 'react';
-import { MEALS } from '../constants/data';
-import { loadJSON, saveJSON } from './persist';
+import { listTodayMeals } from '../services/meals';
 import type { Meal } from '../types';
 
-const KEY = 'foodmood:meals';
-
-let meals: Meal[] = [...MEALS];
+let meals: Meal[] = [];
+let loading = true;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
 
+async function load() {
+  try {
+    meals = await listTodayMeals();
+  } catch {
+    // keep whatever we have; offline or not signed in yet
+  } finally {
+    loading = false;
+    emit();
+  }
+}
+
 export async function hydrateMeals() {
-  const saved = await loadJSON<Meal[]>(KEY);
-  if (saved) meals = saved;
-  else saveJSON(KEY, meals);
-  emit();
+  await load();
+}
+
+// Re-fetch from Supabase (after a capture or a mood update).
+export async function refreshMeals() {
+  await load();
 }
 
 export function useMeals(): Meal[] {
   return useSyncExternalStore(subscribe, () => meals);
 }
 
-export function getMeals(): Meal[] {
-  return meals;
+export function useMealsLoading(): boolean {
+  return useSyncExternalStore(subscribe, () => loading);
 }
 
-// New capture lands at the top of the feed for immediate feedback.
-export function addMeal(meal: Meal) {
-  meals = [meal, ...meals];
-  saveJSON(KEY, meals);
-  emit();
+export function getMeals(): Meal[] {
+  return meals;
 }
