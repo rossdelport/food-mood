@@ -8,9 +8,15 @@
     "scheme": "foodmood",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.rossdelport.foodmood",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Food Mood uses the camera to capture photos of your meals.",
+        "NSPhotoLibraryUsageDescription": "Food Mood accesses your photos so you can log a meal from your library."
+      }
     },
     "android": {
+      "package": "com.rossdelport.foodmood",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -35,6 +41,21 @@
           }
         }
       ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Food Mood uses the camera to capture photos of your meals.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Food Mood accesses your photos so you can log a meal from your library."
+        }
+      ],
+      "expo-notifications",
       "expo-sqlite"
     ],
     "experiments": {

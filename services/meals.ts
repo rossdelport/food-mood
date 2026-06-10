@@ -141,6 +141,25 @@ export async function getMealById(id: string): Promise<Meal | null> {
   return rowToMeal(data);
 }
 
+export async function updateMeal(
+  id: string,
+  fields: Partial<{ title: string; protein: number; carbs: number; fat: number; calories: number }>,
+): Promise<void> {
+  await ensureSession();
+  const { error } = await supabase.from('meals').update(fields).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteMeal(id: string): Promise<void> {
+  await ensureSession();
+  const { data } = await supabase.from('meals').select('photo_path').eq('id', id).maybeSingle();
+  if (data?.photo_path) {
+    try { await supabase.storage.from(BUCKET).remove([data.photo_path]); } catch { /* best-effort */ }
+  }
+  const { error } = await supabase.from('meals').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export async function setMealMood(id: string, mood: string): Promise<void> {
   await ensureSession();
   const { error } = await supabase

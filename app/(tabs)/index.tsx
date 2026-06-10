@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useCallback, useState } from 'react';
+import { View, Text, Pressable, ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { format } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -27,8 +27,18 @@ export default function HomeScreen() {
   const todayKey = format(new Date(), 'yyyy-MM-dd');
   const goToDay = (dateKey: string) => router.push({ pathname: '/day', params: { date: dateKey } });
 
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = useCallback(async () => {
+    await Promise.all([refreshMeals(), refreshMoodDays()]);
+  }, []);
+  const onPullRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }, [refresh]);
+
   // Keep the feed + spectrum + calendar fresh after capture / mood logging.
-  useFocusEffect(useCallback(() => { refreshMeals(); refreshMoodDays(); }, []));
+  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
 
   const totals = dayTotals(meals);
   const moodMeals = meals.filter((m) => m.mood);
@@ -44,7 +54,11 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 140 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onPullRefresh} tintColor={colors.ink3} />}
+      >
         {/* header */}
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <View style={styles.headerTop}>

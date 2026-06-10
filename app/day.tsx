@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, StyleSheet, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, parseISO } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +26,7 @@ export default function DayViewScreen() {
 
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -38,6 +39,12 @@ export default function DayViewScreen() {
       return () => { active = false; };
     }, [dateKey]),
   );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { setMeals(await listMealsForDate(dateKey)); } catch { /* ignore */ }
+    setRefreshing(false);
+  }, [dateKey]);
 
   const moodMeals = meals.filter((m) => m.mood);
   const dom = moodMeals.length ? dominantMood(moodMeals) : null;
@@ -62,7 +69,11 @@ export default function DayViewScreen() {
         <BackButton onPress={() => router.back()} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 40 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 40 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.ink3} />}
+      >
         <Text style={styles.eyebrow}>{isToday ? 'TODAY' : 'DAY VIEW'}</Text>
         <Text style={styles.title}>{format(parseISO(dateKey), 'EEEE, MMMM d')}</Text>
 

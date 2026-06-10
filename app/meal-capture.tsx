@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -10,6 +10,7 @@ import { detectMacros } from '../services/vision';
 import { createMeal } from '../services/meals';
 import { scheduleMealReminder } from '../services/notifications';
 import { refreshMeals } from '../store/meals';
+import { refreshMoodDays } from '../store/moodDays';
 import { useProfile } from '../store/profile';
 import { macroGrams } from '../constants/data';
 import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../constants/theme';
@@ -50,11 +51,14 @@ export default function MealCaptureScreen() {
     setSaving(true);
     try {
       const { id } = await createMeal({ uri: img, detected, reminderMins: profile.notif.mins });
-      if (profile.notif.on) await scheduleMealReminder(id, profile.notif.mins);
-      await refreshMeals();
+      const reminderId = profile.notif.on ? await scheduleMealReminder(id, profile.notif.mins) : 'off';
+      await Promise.all([refreshMeals(), refreshMoodDays()]);
       router.dismissAll();
+      if (profile.notif.on && !reminderId) {
+        Alert.alert('Reminder not set', 'Allow notifications to get a gentle mood check-in after your meals.');
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save the meal');
+      setError(e instanceof Error && e.message ? e.message : 'Could not save the meal. Check your connection and try again.');
       setSaving(false);
     }
   };
