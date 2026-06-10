@@ -1,6 +1,10 @@
 import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
+import { MOODS } from '../constants/data';
 
 type IconProps = { color: string; size?: number };
+
+// Mood colours used for the active Moods tab cluster.
+const MOOD_TRIO = [MOODS.focused.color, MOODS.calm.color, MOODS.contemplative.color];
 
 const stroke = (color: string) => ({
   fill: 'none' as const,
@@ -24,9 +28,9 @@ export function MoodsIcon({ color, size = 23 }: IconProps) {
   const s = stroke(color);
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Circle cx={9.2} cy={9.6} r={3.1} {...s} />
-      <Circle cx={14.8} cy={9.6} r={3.1} {...s} />
-      <Circle cx={12} cy={14.6} r={3.1} {...s} />
+      <Circle cx={8.5} cy={9} r={3.9} {...s} />
+      <Circle cx={15.5} cy={9} r={3.9} {...s} />
+      <Circle cx={12} cy={15.2} r={3.9} {...s} />
     </Svg>
   );
 }
@@ -121,12 +125,12 @@ export function HomeFilledIcon({ color, size = 23 }: IconProps) {
   );
 }
 
-export function MoodsFilledIcon({ color, size = 23 }: IconProps) {
+export function MoodsFilledIcon({ size = 23 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Circle cx={9.2} cy={9.6} r={3.2} fill={color} />
-      <Circle cx={14.8} cy={9.6} r={3.2} fill={color} />
-      <Circle cx={12} cy={14.6} r={3.2} fill={color} />
+      <Circle cx={8.5} cy={9} r={3.9} fill={MOOD_TRIO[0]} />
+      <Circle cx={15.5} cy={9} r={3.9} fill={MOOD_TRIO[1]} />
+      <Circle cx={12} cy={15.2} r={3.9} fill={MOOD_TRIO[2]} />
     </Svg>
   );
 }
