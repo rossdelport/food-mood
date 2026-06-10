@@ -4,8 +4,9 @@
 import * as Haptics from 'expo-haptics';
 
 let enabled = true;
-/** Toggle all haptics (driven by the user's Profile setting). */
-export const setHapticsEnabled = (v: boolean) => { enabled = v; };
+/** Toggle all haptics (driven by the user's Profile setting). Only an explicit
+ *  `false` disables — a missing/undefined value keeps haptics on. */
+export const setHapticsEnabled = (v: boolean | undefined | null) => { enabled = v !== false; };
 
 const run = (fn: () => Promise<unknown>) => { if (enabled) fn().catch(() => {}); };
 
