@@ -21,6 +21,7 @@ import { hydrateJournal } from '../store/journal';
 import { hydrateMoods } from '../store/moods';
 import { hydrateProfile } from '../store/profile';
 import { hydrateMeals } from '../store/meals';
+import { ensureSession } from '../services/supabase';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -46,6 +47,11 @@ export default function RootLayout() {
     Promise.all([hydrateAuth(), hydrateJournal(), hydrateMoods(), hydrateProfile(), hydrateMeals()]).finally(() =>
       setStoresReady(true),
     );
+  }, []);
+
+  // Establish the anonymous Supabase session in the background (non-blocking).
+  useEffect(() => {
+    ensureSession();
   }, []);
 
   const ready = loaded && storesReady;
