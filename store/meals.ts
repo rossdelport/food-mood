@@ -10,6 +10,9 @@ const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
 
 async function load() {
+  // Show the loading state only when we have nothing yet (avoids a spinner
+  // flash on focus re-fetches when meals are already on screen).
+  if (meals.length === 0) { loading = true; emit(); }
   try {
     meals = await listTodayMeals();
   } catch {

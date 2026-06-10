@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { format } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -11,7 +11,7 @@ import OrbRefresh from '../../components/OrbRefresh';
 import { PlusIcon } from '../../components/NavIcons';
 import { colors, fonts, radius as radii, buttonShadow } from '../../constants/theme';
 import { dayTotals, dominantMood, kcalOf } from '../../constants/data';
-import { useMeals, refreshMeals } from '../../store/meals';
+import { useMeals, useMealsLoading, refreshMeals } from '../../store/meals';
 import { refreshMoodDays } from '../../store/moodDays';
 import { useProfile } from '../../store/profile';
 import { getMoodById } from '../../store/moods';
@@ -23,6 +23,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const meals = useMeals();
+  const mealsLoading = useMealsLoading();
   const profile = useProfile();
   const showCal = profile.showCalories;
   const targets = profile.targets;
@@ -96,7 +97,11 @@ export default function HomeScreen() {
         {/* feed */}
         <View style={styles.feed}>
           {meals.length === 0 ? (
-            <Text style={styles.empty}>No meals logged yet today. Snap your first one to start your mood journey.</Text>
+            mealsLoading ? (
+              <View style={styles.feedLoading}><ActivityIndicator color={colors.ink3} /></View>
+            ) : (
+              <Text style={styles.empty}>No meals logged yet today. Snap your first one to start your mood journey.</Text>
+            )
           ) : (
             <View style={{ gap: 10 }}>
               {meals.map((m) => (
@@ -139,4 +144,5 @@ const styles = StyleSheet.create({
   logText: { fontFamily: fonts.medium, fontSize: 15.5, letterSpacing: 0.2, color: colors.accentText },
   feed: { paddingHorizontal: 16, paddingTop: 14 },
   empty: { fontFamily: fonts.serifItalic, fontSize: 14, lineHeight: 21, color: colors.ink3, textAlign: 'center', paddingVertical: 24, paddingHorizontal: 24 },
+  feedLoading: { paddingVertical: 40, alignItems: 'center' },
 });

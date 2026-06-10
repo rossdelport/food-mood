@@ -1,4 +1,5 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import MoodDot from './MoodDot';
 import { colors, fonts, macroColors as defaultMacroColors, radius as radii } from '../constants/theme';
@@ -23,6 +24,7 @@ export default function MealCard({
   showCal = false,
   macroColors = defaultMacroColors,
 }: Props) {
+  const [imgLoading, setImgLoading] = useState(true);
   return (
     <Pressable
       onPress={() => onPress?.(meal)}
@@ -33,7 +35,20 @@ export default function MealCard({
         onPress={onPressPhoto ? () => onPressPhoto(meal) : undefined}
         style={[styles.photoWrap, { width: photo, height: photo }]}
       >
-        <Image source={{ uri: meal.img }} style={styles.photo} contentFit="cover" transition={200} />
+        <Image
+          source={{ uri: meal.img }}
+          style={styles.photo}
+          contentFit="cover"
+          transition={200}
+          onLoadStart={() => setImgLoading(true)}
+          onLoad={() => setImgLoading(false)}
+          onError={() => setImgLoading(false)}
+        />
+        {imgLoading && (
+          <View style={styles.photoLoading}>
+            <ActivityIndicator size="small" color={colors.ink3} />
+          </View>
+        )}
       </Pressable>
 
       <View style={styles.middle}>
@@ -85,6 +100,7 @@ const styles = StyleSheet.create({
     marginLeft: 12, // separation from the mood dot
   },
   photo: { width: '100%', height: '100%' },
+  photoLoading: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.chip },
   middle: { flex: 1, minWidth: 0, marginLeft: 13 },
   title: {
     fontFamily: fonts.medium,
