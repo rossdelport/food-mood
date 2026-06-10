@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Image } from 'expo-image';
+import { format, parseISO } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import BackButton from '../components/BackButton';
@@ -19,8 +20,9 @@ import type { DetectedMeal } from '../types';
 export default function MealCaptureScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { img } = useLocalSearchParams<{ img?: string }>();
+  const { img, date } = useLocalSearchParams<{ img?: string; date?: string }>();
   const profile = useProfile();
+  const isToday = !date || date === format(new Date(), 'yyyy-MM-dd');
 
   const [detected, setDetected] = useState<DetectedMeal | null>(null);
   const [analyzing, setAnalyzing] = useState(true);
@@ -50,11 +52,20 @@ export default function MealCaptureScreen() {
     if (!detected || !img || saving) return;
     setSaving(true);
     try {
-      const { id } = await createMeal({ uri: img, detected, reminderMins: profile.notif.mins });
-      const reminderId = profile.notif.on ? await scheduleMealReminder(id, profile.notif.mins) : 'off';
+      // Back-date to the chosen day (keep the current time-of-day) when logging in the past.
+      let capturedAt: Date | undefined;
+      if (date && !isToday) {
+        const now = new Date();
+        capturedAt = parseISO(date);
+        capturedAt.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+      }
+      const { id } = await createMeal({ uri: img, detected, reminderMins: profile.notif.mins, capturedAt });
+      // Reminders only make sense for meals logged today.
+      const reminderId = isToday && profile.notif.on ? await scheduleMealReminder(id, profile.notif.mins) : 'off';
       await Promise.all([refreshMeals(), refreshMoodDays()]);
-      router.dismissAll();
-      if (profile.notif.on && !reminderId) {
+      if (date) router.back(); // return to the day view that launched the log
+      else router.dismissAll();
+      if (isToday && profile.notif.on && !reminderId) {
         Alert.alert('Reminder not set', 'Allow notifications to get a gentle mood check-in after your meals.');
       }
     } catch (e) {
@@ -126,7 +137,9 @@ export default function MealCaptureScreen() {
             )}
 
             <Text style={styles.reminderNote}>
-              We'll check in {profile.notif.mins} min after eating to capture how this meal made you feel.
+              {isToday
+                ? `We'll check in ${profile.notif.mins} min after eating to capture how this meal made you feel.`
+                : "You can set how this meal made you feel from the day's view."}
             </Text>
           </>
         ) : null}

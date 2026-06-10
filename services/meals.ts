@@ -46,30 +46,30 @@ async function uploadPhoto(uid: string, uri: string): Promise<string> {
   return path;
 }
 
-// Create a meal row (mood pending) and schedule its reminder time.
+// Create a meal row (mood pending). `capturedAt` back-dates the meal to a past
+// day; omit it for "now".
 export async function createMeal(params: {
   uri: string;
   detected: DetectedMeal;
   reminderMins: number;
+  capturedAt?: Date;
 }): Promise<{ id: string; reminderAt: Date }> {
   const uid = await ensureSession();
   if (!uid) throw new Error('Not signed in');
   const photoPath = await uploadPhoto(uid, params.uri);
   const reminderAt = new Date(Date.now() + params.reminderMins * 60000);
-  const { data, error } = await supabase
-    .from('meals')
-    .insert({
-      user_id: uid,
-      title: params.detected.title,
-      protein: params.detected.protein,
-      carbs: params.detected.carbs,
-      fat: params.detected.fat,
-      calories: params.detected.calories,
-      photo_path: photoPath,
-      reminder_at: reminderAt.toISOString(),
-    })
-    .select('id')
-    .single();
+  const row: Record<string, unknown> = {
+    user_id: uid,
+    title: params.detected.title,
+    protein: params.detected.protein,
+    carbs: params.detected.carbs,
+    fat: params.detected.fat,
+    calories: params.detected.calories,
+    photo_path: photoPath,
+    reminder_at: reminderAt.toISOString(),
+  };
+  if (params.capturedAt) row.captured_at = params.capturedAt.toISOString();
+  const { data, error } = await supabase.from('meals').insert(row).select('id').single();
   if (error) throw error;
   return { id: data.id as string, reminderAt };
 }

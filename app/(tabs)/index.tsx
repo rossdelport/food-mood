@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { View, Text, Pressable, ScrollView, RefreshControl, StyleSheet } from 'react-native';
+import { useCallback } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { format } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -7,6 +7,7 @@ import MoodDot from '../../components/MoodDot';
 import MealCard from '../../components/MealCard';
 import WeekSpectrum from '../../components/WeekSpectrum';
 import MoodCalendar from '../../components/MoodCalendar';
+import OrbRefresh from '../../components/OrbRefresh';
 import { PlusIcon } from '../../components/NavIcons';
 import { colors, fonts, radius as radii, buttonShadow } from '../../constants/theme';
 import { dayTotals, dominantMood, kcalOf } from '../../constants/data';
@@ -27,15 +28,9 @@ export default function HomeScreen() {
   const todayKey = format(new Date(), 'yyyy-MM-dd');
   const goToDay = (dateKey: string) => router.push({ pathname: '/day', params: { date: dateKey } });
 
-  const [refreshing, setRefreshing] = useState(false);
   const refresh = useCallback(async () => {
     await Promise.all([refreshMeals(), refreshMoodDays()]);
   }, []);
-  const onPullRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await refresh();
-    setRefreshing(false);
-  }, [refresh]);
 
   // Keep the feed + spectrum + calendar fresh after capture / mood logging.
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
@@ -54,11 +49,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 140 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onPullRefresh} tintColor={colors.ink3} />}
-      >
+      <OrbRefresh onRefresh={refresh} contentContainerStyle={{ paddingBottom: 140 }}>
         {/* header */}
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <View style={styles.headerTop}>
@@ -121,7 +112,7 @@ export default function HomeScreen() {
           )}
           <MoodCalendar onDay={goToDay} />
         </View>
-      </ScrollView>
+      </OrbRefresh>
     </View>
   );
 }

@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-nati
 import { CameraView, type CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LibraryIcon, FlipIcon, CloseIcon } from '../components/NavIcons';
 import { colors, fonts, radius as radii } from '../constants/theme';
@@ -13,12 +13,13 @@ import { colors, fonts, radius as radii } from '../constants/theme';
 export default function CameraScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { date } = useLocalSearchParams<{ date?: string }>();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraType>('back');
   const [busy, setBusy] = useState(false);
 
-  const goToMood = (uri: string) => router.replace({ pathname: '/meal-capture', params: { img: uri } });
+  const goToMood = (uri: string) => router.replace({ pathname: '/meal-capture', params: { img: uri, ...(date ? { date } : {}) } });
 
   const takePhoto = async () => {
     if (busy) return;

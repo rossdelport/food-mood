@@ -55,7 +55,7 @@ export default function MoodCalendar({ onDay }: Props) {
           const isToday = key === todayKey;
           const r = Math.max(7, radii.base);
           return (
-            <Pressable key={d} style={styles.cell} disabled={!hasMeal} onPress={() => hasMeal && onDay?.(key)}>
+            <Pressable key={d} style={styles.cell} disabled={isFuture} onPress={() => !isFuture && onDay?.(key)}>
               <View
                 style={[
                   styles.tile,

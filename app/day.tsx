@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, RefreshControl, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, parseISO } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,11 +7,13 @@ import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import BackButton from '../components/BackButton';
 import MoodDot from '../components/MoodDot';
 import MealCard from '../components/MealCard';
+import OrbRefresh from '../components/OrbRefresh';
+import { PlusIcon } from '../components/NavIcons';
 import { dayTotals, dominantMood, kcalOf, hexA } from '../constants/data';
 import { listMealsForDate } from '../services/meals';
 import { useProfile } from '../store/profile';
 import { getMoodById } from '../store/moods';
-import { colors, fonts } from '../constants/theme';
+import { colors, fonts, radius as radii, buttonShadow } from '../constants/theme';
 import type { Meal } from '../types';
 
 export default function DayViewScreen() {
@@ -26,7 +28,6 @@ export default function DayViewScreen() {
 
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -41,9 +42,7 @@ export default function DayViewScreen() {
   );
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
     try { setMeals(await listMealsForDate(dateKey)); } catch { /* ignore */ }
-    setRefreshing(false);
   }, [dateKey]);
 
   const moodMeals = meals.filter((m) => m.mood);
@@ -69,11 +68,7 @@ export default function DayViewScreen() {
         <BackButton onPress={() => router.back()} />
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 40 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.ink3} />}
-      >
+      <OrbRefresh onRefresh={onRefresh} indicatorTop={6} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 40 }}>
         <Text style={styles.eyebrow}>{isToday ? 'TODAY' : 'DAY VIEW'}</Text>
         <Text style={styles.title}>{format(parseISO(dateKey), 'EEEE, MMMM d')}</Text>
 
@@ -85,24 +80,31 @@ export default function DayViewScreen() {
           </View>
         </View>
 
-        <View style={styles.summary}>
-          {summary.map(([label, value, unit], i) => (
-            <View key={label + unit} style={styles.summaryItem}>
-              {i > 0 && <View style={styles.summaryDot} />}
-              <Text style={styles.summaryText}>
-                {label ? `${label} ` : ''}
-                <Text style={styles.summaryValue}>{value}{unit}</Text>
-              </Text>
-            </View>
-          ))}
-        </View>
+        {meals.length > 0 && (
+          <View style={styles.summary}>
+            {summary.map(([label, value, unit], i) => (
+              <View key={label + unit} style={styles.summaryItem}>
+                {i > 0 && <View style={styles.summaryDot} />}
+                <Text style={styles.summaryText}>
+                  {label ? `${label} ` : ''}
+                  <Text style={styles.summaryValue}>{value}{unit}</Text>
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         <View style={styles.divider} />
+
+        <Pressable style={styles.logBtn} onPress={() => router.push({ pathname: '/camera', params: { date: dateKey } })}>
+          <PlusIcon color={colors.accentText} size={17} />
+          <Text style={styles.logText}>{isToday ? 'Log a meal' : 'Log a meal for this day'}</Text>
+        </Pressable>
 
         {loading ? (
           <ActivityIndicator color={colors.ink3} style={{ marginTop: 30 }} />
         ) : meals.length === 0 ? (
-          <Text style={styles.empty}>No meals logged this day.</Text>
+          <Text style={styles.empty}>No meals logged this day yet.</Text>
         ) : (
           <>
             <Text style={styles.mealsCount}>{meals.length} {meals.length === 1 ? 'MEAL' : 'MEALS'}</Text>
@@ -123,7 +125,7 @@ export default function DayViewScreen() {
             </View>
           </>
         )}
-      </ScrollView>
+      </OrbRefresh>
     </View>
   );
 }
@@ -143,6 +145,8 @@ const styles = StyleSheet.create({
   summaryText: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.ink3 },
   summaryValue: { fontFamily: fonts.medium, color: colors.ink2 },
   divider: { height: 1, backgroundColor: colors.line, marginVertical: 20 },
-  mealsCount: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3, marginBottom: 12 },
+  logBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: colors.accent, borderRadius: radii.button, paddingVertical: 16, ...buttonShadow },
+  logText: { fontFamily: fonts.medium, fontSize: 15.5, letterSpacing: 0.2, color: colors.accentText },
+  mealsCount: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3, marginTop: 24, marginBottom: 12 },
   empty: { fontFamily: fonts.serifItalic, fontSize: 14, color: colors.ink3, textAlign: 'center', marginTop: 24 },
 });
