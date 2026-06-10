@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { View, Animated, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { View, Animated, ScrollView, StyleSheet, type StyleProp, type ViewStyle, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOODS, MOOD_ORDER } from '../constants/data';
 import { showToast } from '../store/toast';
@@ -18,32 +18,43 @@ type Props = {
 
 // Pull-to-refresh with a mood-orb indicator: the further you pull, the more
 // orbs light up (1 by 1). Release with all 5 lit and it pins open for a beat
-// (refreshing), then collapses and shows a "Reloaded" toast.
+// (refreshing), then the orbs fade out as the page drops (no reverse un-light).
 export default function OrbRefresh({ onRefresh, children, contentContainerStyle, indicatorTop }: Props) {
   const insets = useSafeAreaInsets();
   const topPad = indicatorTop ?? insets.top + 16;
   const holdHeight = topPad + 48;
 
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const hold = useRef(new Animated.Value(0)).current; // 0..1 while pinned open
+  const lit = useRef(new Animated.Value(0)).current; // orb-lighting progress (0..1)
+  const hold = useRef(new Animated.Value(0)).current; // spacer gap while held open (0..1)
+  const exit = useRef(new Animated.Value(1)).current; // group fade-out on collapse
   const offset = useRef(0);
   const refreshing = useRef(false);
 
-  // combined "lit" progress: pull amount + hold (0..1, clamped per orb below)
-  const pullProgress = scrollY.interpolate({ inputRange: [-THRESHOLD, 0], outputRange: [1, 0], extrapolate: 'clamp' });
-  const progress = Animated.add(pullProgress, hold);
-  const containerOpacity = progress.interpolate({ inputRange: [0, 0.06], outputRange: [0, 1], extrapolate: 'clamp' });
+  const litOpacity = lit.interpolate({ inputRange: [0, 0.06], outputRange: [0, 1], extrapolate: 'clamp' });
+  const containerOpacity = Animated.multiply(litOpacity, exit);
   const spacerHeight = hold.interpolate({ inputRange: [0, 1], outputRange: [0, holdHeight] });
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    offset.current = y;
+    // drive the orb lighting from the overscroll pull (ignored once refreshing)
+    if (!refreshing.current) lit.setValue(Math.max(0, Math.min(1, -y / THRESHOLD)));
+  };
 
   const trigger = async () => {
     if (refreshing.current) return;
     refreshing.current = true;
-    // pin the orbs open
+    Animated.timing(lit, { toValue: 1, duration: 120, useNativeDriver: false }).start();
     Animated.timing(hold, { toValue: 1, duration: 160, useNativeDriver: false }).start();
-    // refresh, but hold open for at least HOLD_MS so it reads as a refresh
+    // refresh, but hold open at least HOLD_MS so it reads as a refresh
     await Promise.all([Promise.resolve(onRefresh()), new Promise((r) => setTimeout(r, HOLD_MS))]);
-    // collapse, then toast
-    Animated.timing(hold, { toValue: 0, duration: 300, useNativeDriver: false }).start(() => {
+    // collapse: fade the lit orbs out as a group while the page drops
+    Animated.parallel([
+      Animated.timing(exit, { toValue: 0, duration: 180, useNativeDriver: false }),
+      Animated.timing(hold, { toValue: 0, duration: 300, useNativeDriver: false }),
+    ]).start(() => {
+      lit.setValue(0);
+      exit.setValue(1);
       refreshing.current = false;
       showToast('Reloaded', 'refresh');
     });
@@ -57,29 +68,26 @@ export default function OrbRefresh({ onRefresh, children, contentContainerStyle,
           {ORBS.map((c, i) => {
             const lo = i / ORBS.length;
             const hi = (i + 1) / ORBS.length;
-            const opacity = progress.interpolate({ inputRange: [lo, hi], outputRange: [0.16, 1], extrapolate: 'clamp' });
-            const scale = progress.interpolate({ inputRange: [lo, hi], outputRange: [0.5, 1], extrapolate: 'clamp' });
+            const opacity = lit.interpolate({ inputRange: [lo, hi], outputRange: [0.16, 1], extrapolate: 'clamp' });
+            const scale = lit.interpolate({ inputRange: [lo, hi], outputRange: [0.5, 1], extrapolate: 'clamp' });
             return <Animated.View key={i} style={[styles.orb, { backgroundColor: c, opacity, transform: [{ scale }] }]} />;
           })}
         </View>
       </Animated.View>
 
-      <Animated.ScrollView
+      <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         scrollEventThrottle={16}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: false,
-          listener: (e: { nativeEvent: { contentOffset: { y: number } } }) => { offset.current = e.nativeEvent.contentOffset.y; },
-        })}
+        onScroll={onScroll}
         onScrollEndDrag={() => { if (offset.current <= -THRESHOLD) trigger(); }}
         contentContainerStyle={contentContainerStyle}
       >
         <Animated.View style={{ height: spacerHeight }} />
         {children}
-      </Animated.ScrollView>
+      </ScrollView>
     </View>
   );
 }
