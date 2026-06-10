@@ -4,8 +4,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CloseIcon } from '../components/NavIcons';
 import { getEntry, saveEntry } from '../store/journal';
+import { useMoods } from '../store/moods';
 import { fmtDate, nowTime } from '../constants/journalData';
-import { MOODS, MOOD_ORDER, WEEK } from '../constants/data';
+import { WEEK } from '../constants/data';
 import { colors, fonts, radius as radii } from '../constants/theme';
 import type { JournalEntry, JournalLink } from '../types';
 
@@ -13,6 +14,7 @@ export default function JournalEntryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
+  const moods = useMoods();
 
   const [draft, setDraft] = useState<JournalEntry>(() => {
     const existing = id ? getEntry(id) : undefined;
@@ -48,13 +50,13 @@ export default function JournalEntryScreen() {
         </Pressable>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: insets.bottom + 40 }}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: insets.bottom + 40 }}>
         <Text style={styles.dateEyebrow}>{draft.date.toUpperCase()}</Text>
 
         <Text style={styles.prompt}>How were you feeling?</Text>
         <View style={styles.moodGrid}>
-          {MOOD_ORDER.map((mid) => {
-            const m = MOODS[mid];
+          {moods.map((m) => {
+            const mid = m.id;
             const on = draft.moodId === mid;
             const dim = draft.moodId != null && !on;
             return (
@@ -129,8 +131,8 @@ const styles = StyleSheet.create({
   saveTextOff: { color: colors.ink3 },
   dateEyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2, color: colors.ink3 },
   prompt: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.ink3, marginTop: 16 },
-  moodGrid: { flexDirection: 'row', marginTop: 10 },
-  moodItem: { flex: 1, alignItems: 'center', gap: 7 },
+  moodGrid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, rowGap: 16 },
+  moodItem: { width: '20%', alignItems: 'center', gap: 7 },
   moodOrb: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: 'transparent' },
   moodOrbOn: { borderColor: colors.ink1, transform: [{ scale: 1.08 }] },
   moodName: { fontFamily: fonts.regular, fontSize: 9.5, textAlign: 'center', color: colors.ink3, letterSpacing: 0.1 },

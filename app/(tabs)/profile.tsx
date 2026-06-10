@@ -46,7 +46,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 120 }}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 120 }}>
         {/* user card */}
         <View style={styles.userCard}>
           <Pressable style={styles.avatarWrap} onPress={pickAvatar}>

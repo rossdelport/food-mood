@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { MOODS } from '../../constants/data';
+import { getMoodById } from '../../store/moods';
 import { colors, fonts, radius as radii } from '../../constants/theme';
 import type { JournalEntry } from '../../types';
 
@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default function EntryCard({ entry, onPress, weekdayOnly }: Props) {
-  const mood = entry.moodId ? MOODS[entry.moodId] : null;
+  const mood = entry.moodId ? getMoodById(entry.moodId) : null;
   const weekday = (entry.date || '').split(',')[0];
   return (
     <Pressable style={styles.card} onPress={onPress}>

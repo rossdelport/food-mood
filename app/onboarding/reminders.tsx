@@ -1,16 +1,16 @@
-import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import OnbShell from '../../components/onboarding/OnbShell';
 import OnbButton from '../../components/onboarding/OnbButton';
+import { useProfile, updateNotif } from '../../store/profile';
 import { MOODS, MOOD_ORDER } from '../../constants/data';
 import { colors, fonts } from '../../constants/theme';
 
 export default function Reminders() {
   const router = useRouter();
-  const [mins, setMins] = useState(60);
+  const mins = useProfile().notif.mins;
   const next = () => router.push('/onboarding/ready');
 
   return (
@@ -51,7 +51,7 @@ export default function Reminders() {
             maximumValue={120}
             step={15}
             value={mins}
-            onValueChange={setMins}
+            onValueChange={(v) => updateNotif({ mins: v })}
             minimumTrackTintColor={colors.accent}
             maximumTrackTintColor={colors.line}
             thumbTintColor={colors.accent}

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -14,17 +13,16 @@ const GOALS = ['Understand my patterns', 'Eat more intentionally', 'Feel better 
 export default function AboutYou() {
   const router = useRouter();
   const profile = useProfile();
-  const [goals, setGoals] = useState<number[]>([]);
-  const [why, setWhy] = useState('');
-  const toggleGoal = (i: number) => setGoals((g) => (g.includes(i) ? g.filter((x) => x !== i) : [...g, i]));
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const avatar = profile.avatar;
+  const toggleGoal = (label: string) =>
+    updateProfile({ goals: profile.goals.includes(label) ? profile.goals.filter((g) => g !== label) : [...profile.goals, label] });
   const next = () => router.push('/onboarding/moods');
 
   const pickAvatar = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return;
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1] });
-    if (!result.canceled && result.assets?.[0]) setAvatar(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]) updateProfile({ avatar: result.assets[0].uri });
   };
 
   return (
@@ -34,7 +32,7 @@ export default function AboutYou() {
         <Text style={styles.sub}>This stays private. It just helps Food Mood feel like yours.</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 30, paddingTop: 14, gap: 18 }}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingHorizontal: 30, paddingTop: 14, gap: 18 }}>
         <View style={styles.avatarBlock}>
           <Pressable style={styles.avatarWrap} onPress={pickAvatar}>
             {avatar ? (
@@ -59,10 +57,10 @@ export default function AboutYou() {
         <View>
           <Text style={styles.label}>YOUR GOAL</Text>
           <View style={styles.pills}>
-            {GOALS.map((g, i) => {
-              const on = goals.includes(i);
+            {GOALS.map((g) => {
+              const on = profile.goals.includes(g);
               return (
-                <Pressable key={g} onPress={() => toggleGoal(i)} style={[styles.pill, on && styles.pillOn]}>
+                <Pressable key={g} onPress={() => toggleGoal(g)} style={[styles.pill, on && styles.pillOn]}>
                   <Text style={[styles.pillText, on && styles.pillTextOn]}>{g}</Text>
                 </Pressable>
               );
@@ -73,8 +71,8 @@ export default function AboutYou() {
         <View>
           <Text style={styles.label}>WHAT BROUGHT YOU HERE?</Text>
           <TextInput
-            value={why}
-            onChangeText={setWhy}
+            value={profile.reason}
+            onChangeText={(reason) => updateProfile({ reason })}
             placeholder="I want to feel less anxious around food…"
             placeholderTextColor={colors.ink3}
             multiline

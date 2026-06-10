@@ -6,22 +6,39 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import BackButton from '../components/BackButton';
 import MoodDot from '../components/MoodDot';
 import MacroBar from '../components/MacroBar';
-import { MEALS, MOODS, TODAY, macroGrams, kcalOf, dayTotals, dominantMood } from '../constants/data';
+import { WEEK, MOODS, TODAY, macroGrams, kcalOf, dayTotals, dominantMood, mealsForDay } from '../constants/data';
 import { detectMacros } from '../services/vision';
+import { useMeals, addMeal } from '../store/meals';
+import { useProfile } from '../store/profile';
+import { getMoodById } from '../store/moods';
+import { saveEntry } from '../store/journal';
+import { fmtDate, nowTime } from '../constants/journalData';
 import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../constants/theme';
-import type { Macros } from '../types';
+import type { Macros, Meal } from '../types';
 
-const SHOW_CAL = false; // "Show calories on meals" — default OFF
+// Find a meal by id across today's logged meals and the mock per-day builder.
+function findMeal(id: string | undefined, today: Meal[]): Meal | undefined {
+  if (!id) return undefined;
+  const inToday = today.find((m) => m.id === id);
+  if (inToday) return inToday;
+  for (const d of WEEK) {
+    const m = mealsForDay(d.label).find((x) => x.id === id);
+    if (m) return m;
+  }
+  return undefined;
+}
 
 export default function BreakdownScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const todayMeals = useMeals();
+  const showCal = useProfile().showCalories;
   const params = useLocalSearchParams<{ mode?: string; mealId?: string; mood?: string; img?: string }>();
   const mode = params.mode ?? 'meal';
   const isDay = mode === 'day';
   const isNew = mode === 'new';
 
-  const meal = !isDay && !isNew ? MEALS.find((m) => m.id === params.mealId) : undefined;
+  const meal = !isDay && !isNew ? findMeal(params.mealId, todayMeals) : undefined;
   const img = isNew ? params.img || undefined : meal?.img;
 
   // macros: tapped meal -> known; day -> totals; new capture -> detected (async).
@@ -31,13 +48,13 @@ export default function BreakdownScreen() {
   }, [isNew, img]);
 
   const macros: Macros | null = isDay
-    ? dayTotals(MEALS)
+    ? dayTotals(todayMeals)
     : isNew
       ? detected
       : meal?.macros ?? null;
 
-  const moodId = params.mood || (isDay ? dominantMood(MEALS) : meal?.mood) || 'calm';
-  const mood = MOODS[moodId];
+  const moodId = params.mood || (isDay ? dominantMood(todayMeals) : meal?.mood) || 'calm';
+  const mood = getMoodById(moodId) ?? MOODS.calm;
 
   const [note, setNote] = useState('');
 
@@ -48,9 +65,22 @@ export default function BreakdownScreen() {
     : `${mood.label} meals like this tend to sit lighter on carbs.`;
 
   const finish = () => {
-    if (isNew) router.dismissAll();
-    else router.back();
+    if (isNew) {
+      // Save the captured meal to today's feed, and the note to the journal.
+      if (detected) {
+        const time = nowTime();
+        addMeal({ id: `meal-${Date.now().toString(36)}`, title: 'Logged meal', time, mood: moodId, img: img ?? '', macros: detected });
+      }
+      if (note.trim()) {
+        const ts = Date.now();
+        saveEntry({ id: `j${ts.toString(36)}`, ts, updatedAt: ts, moodId, link: null, text: note, date: fmtDate(ts), time: nowTime() });
+      }
+      router.dismissAll();
+    } else {
+      router.back();
+    }
   };
+  const canFinish = !isNew || !!detected;
   const buttonLabel = isNew ? (note.trim() ? 'Save & Done' : 'Done') : isDay ? 'Done' : 'Back to journal';
 
   return (
@@ -61,6 +91,8 @@ export default function BreakdownScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 20, paddingBottom: 140 }}
       >
         <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text>
@@ -87,7 +119,7 @@ export default function BreakdownScreen() {
               <MacroBar macros={macros} height={20} radius={radii.base} colors={macroColors} />
               <View style={styles.barFooter}>
                 <Text style={styles.barFooterText}>{macroGrams(macros)} g total</Text>
-                {SHOW_CAL && <Text style={styles.barFooterText}>{kcalOf(macros)} cal</Text>}
+                {showCal && <Text style={styles.barFooterText}>{kcalOf(macros)} cal</Text>}
               </View>
             </>
           ) : (
@@ -139,7 +171,7 @@ export default function BreakdownScreen() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-        <Pressable style={styles.doneBtn} onPress={finish}>
+        <Pressable style={[styles.doneBtn, !canFinish && { opacity: 0.5 }]} onPress={finish} disabled={!canFinish}>
           <Text style={styles.doneText}>{buttonLabel}</Text>
         </Pressable>
       </View>

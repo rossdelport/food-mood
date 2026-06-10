@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import BackButton from '../components/BackButton';
 import { CheckIcon } from '../components/NavIcons';
-import { MOODS, MOOD_ORDER, hexA } from '../constants/data';
+import { hexA } from '../constants/data';
+import { useMoods } from '../store/moods';
 import { colors, fonts, radius as radii, buttonShadow } from '../constants/theme';
 
 // Post-capture: pick how a meal left you feeling.
@@ -13,9 +14,11 @@ export default function MoodPickerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { img } = useLocalSearchParams<{ img?: string }>();
+  const moods = useMoods();
   const [sel, setSel] = useState<string | null>(null);
 
-  const tint = sel ? MOODS[sel].color : null;
+  const selMood = moods.find((m) => m.id === sel);
+  const tint = selMood ? selMood.color : null;
 
   // Continue button slide-up.
   const slide = useRef(new Animated.Value(0)).current;
@@ -26,8 +29,6 @@ export default function MoodPickerScreen() {
       useNativeDriver: true,
     }).start();
   }, [sel, slide]);
-
-  const moods = MOOD_ORDER.map((id) => MOODS[id]);
 
   return (
     <View style={styles.screen}>

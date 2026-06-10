@@ -5,7 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import BackButton from '../components/BackButton';
 import { EditIcon, TrashIcon } from '../components/NavIcons';
 import { useJournalEntries, deleteEntry } from '../store/journal';
-import { MOODS } from '../constants/data';
+import { getMoodById } from '../store/moods';
 import { colors, fonts, radius as radii } from '../constants/theme';
 
 const DELETE_RED = '#9B5158';
@@ -23,7 +23,7 @@ export default function JournalReadScreen() {
     return <View style={styles.screen} />;
   }
 
-  const mood = entry.moodId ? MOODS[entry.moodId] : null;
+  const mood = entry.moodId ? getMoodById(entry.moodId) : null;
 
   const onDelete = () => {
     deleteEntry(entry.id);

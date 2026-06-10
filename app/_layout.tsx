@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -16,7 +16,11 @@ import {
   Newsreader_500Medium_Italic,
 } from '@expo-google-fonts/newsreader';
 import { colors } from '../constants/theme';
-import { useAuth } from '../store/auth';
+import { useAuth, hydrateAuth } from '../store/auth';
+import { hydrateJournal } from '../store/journal';
+import { hydrateMoods } from '../store/moods';
+import { hydrateProfile } from '../store/profile';
+import { hydrateMeals } from '../store/meals';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,23 +37,34 @@ export default function RootLayout() {
   });
 
   const signedIn = useAuth();
+  const [storesReady, setStoresReady] = useState(false);
   const segments = useSegments();
   const router = useRouter();
 
+  // Load all persisted stores once on launch, before revealing the app.
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
+    Promise.all([hydrateAuth(), hydrateJournal(), hydrateMoods(), hydrateProfile(), hydrateMeals()]).finally(() =>
+      setStoresReady(true),
+    );
+  }, []);
+
+  const ready = loaded && storesReady;
+
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
 
   // First-run / auth gate: not signed in → onboarding welcome.
+  // Waits for storage hydration so signed-in users don't flash onboarding.
   useEffect(() => {
-    if (!loaded) return;
+    if (!ready) return;
     const inOnboarding = segments[0] === 'onboarding';
     if (!signedIn && !inOnboarding) {
       router.replace('/onboarding/welcome');
     }
-  }, [loaded, signedIn, segments, router]);
+  }, [ready, signedIn, segments, router]);
 
-  if (!loaded) return null;
+  if (!ready) return null;
 
   return (
     <SafeAreaProvider>

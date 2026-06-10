@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import OnbShell from '../../components/onboarding/OnbShell';
@@ -26,8 +27,29 @@ function StepIcon({ kind }: { kind: 'cam' | 'orb' | 'spec' }) {
   );
 }
 
+const STAGGER = 700; // gap between reveals — matches screens 2 & 4
+const DURATION = 520;
+
 export default function How() {
   const router = useRouter();
+  const anims = useRef(STEPS.map(() => new Animated.Value(0))).current;
+
+  useEffect(() => {
+    const seq = Animated.stagger(
+      STAGGER,
+      anims.map((a) =>
+        Animated.timing(a, { toValue: 1, duration: DURATION, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ),
+    );
+    seq.start();
+    return () => seq.stop();
+  }, [anims]);
+
+  const reveal = (a: Animated.Value) => ({
+    opacity: a,
+    transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [-18, 0] }) }],
+  });
+
   return (
     <OnbShell idx={3} total={6} footer={<OnbButton label="Continue" onPress={() => router.push('/onboarding/targets')} />}>
       <View style={styles.head}>
@@ -35,7 +57,7 @@ export default function How() {
       </View>
       <View style={styles.list}>
         {STEPS.map((s, i) => (
-          <View key={s.title} style={styles.step}>
+          <Animated.View key={s.title} style={[styles.step, reveal(anims[i])]}>
             <View>
               <View style={styles.well}><StepIcon kind={s.icon} /></View>
               <View style={styles.badge}><Text style={styles.badgeText}>{i + 1}</Text></View>
@@ -44,7 +66,7 @@ export default function How() {
               <Text style={styles.title}>{s.title}</Text>
               <Text style={styles.desc}>{s.desc}</Text>
             </View>
-          </View>
+          </Animated.View>
         ))}
       </View>
     </OnbShell>

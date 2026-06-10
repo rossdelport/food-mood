@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Modal } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Modal, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MoodDot from '../../components/MoodDot';
 import { EditIcon, PlusIcon, CameraIcon } from '../../components/NavIcons';
@@ -77,7 +77,7 @@ export default function MoodsScreen() {
       {/* editor sheet */}
       <Modal visible={!!editing} transparent animationType="fade" onRequestClose={() => setEditing(null)}>
         <Pressable style={styles.backdrop} onPress={() => setEditing(null)}>
-          <Pressable style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]} onPress={() => Keyboard.dismiss()}>
             {editing && (
               <>
                 <View style={styles.grip} />

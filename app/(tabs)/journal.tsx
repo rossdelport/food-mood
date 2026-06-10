@@ -6,8 +6,8 @@ import EntryCard from '../../components/journal/EntryCard';
 import { SearchIcon, PlusIcon } from '../../components/NavIcons';
 import { ChevronLeftIcon } from '../../components/NavIcons';
 import { useJournalEntries } from '../../store/journal';
+import { useMoods, getMoodById } from '../../store/moods';
 import { groupEntries } from '../../constants/journalData';
-import { MOODS, MOOD_ORDER } from '../../constants/data';
 import { colors, fonts, radius as radii, buttonShadow } from '../../constants/theme';
 
 const DAY = 86400000;
@@ -43,7 +43,7 @@ export default function JournalScreen() {
           <Text style={styles.empty}>A quiet page. Tap "New Entry" to begin a reflection.</Text>
         ) : (
           groups.map((g) => {
-            const gm = g.moodId ? MOODS[g.moodId] : null;
+            const gm = g.moodId ? getMoodById(g.moodId) : null;
             return (
               <View key={g.label}>
                 <View style={styles.groupHeader}>
@@ -75,6 +75,7 @@ export default function JournalScreen() {
 function JournalSearch({ onBack, entries }: { onBack: () => void; entries: ReturnType<typeof useJournalEntries> }) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const moods = useMoods();
   const [q, setQ] = useState('');
   const [range, setRange] = useState<'all' | '7' | 'month'>('all');
   const [picked, setPicked] = useState<string[]>([]);
@@ -117,13 +118,12 @@ function JournalSearch({ onBack, entries }: { onBack: () => void; entries: Retur
           })}
         </View>
         <View style={styles.moodChips}>
-          {MOOD_ORDER.map((id) => {
-            const m = MOODS[id];
-            const on = picked.includes(id);
+          {moods.map((m) => {
+            const on = picked.includes(m.id);
             return (
               <Pressable
-                key={id}
-                onPress={() => toggle(id)}
+                key={m.id}
+                onPress={() => toggle(m.id)}
                 style={[styles.moodChip, { backgroundColor: m.color }, on && styles.moodChipOn, { opacity: on || !picked.length ? 1 : 0.4 }]}
               />
             );
@@ -132,7 +132,7 @@ function JournalSearch({ onBack, entries }: { onBack: () => void; entries: Retur
         <Text style={styles.resultCount}>{results.length} RESULT{results.length === 1 ? '' : 'S'}</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 120, gap: 10 }}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 120, gap: 10 }}>
         {results.map((e) => (
           <EntryCard key={e.id} entry={e} onPress={() => router.push({ pathname: '/journal-read', params: { id: e.id } })} />
         ))}

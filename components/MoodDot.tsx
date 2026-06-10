@@ -1,6 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MOODS } from '../constants/data';
+import { getMoodById } from '../store/moods';
 
 type Props = {
   moodId: string;
@@ -13,7 +13,7 @@ type Props = {
 // A filled mood circle — the emotional anchor. The "glossy" look is approximated
 // with a subtle dark inner border, a soft drop shadow, and a white top highlight.
 export default function MoodDot({ moodId, size = 48, ring = true, color }: Props) {
-  const fill = color ?? MOODS[moodId]?.color ?? '#CCC';
+  const fill = color ?? getMoodById(moodId)?.color ?? '#CCC';
   return (
     <View
       style={[

@@ -6,19 +6,24 @@ import MealCard from '../../components/MealCard';
 import WeekSpectrum from '../../components/WeekSpectrum';
 import MoodCalendar from '../../components/MoodCalendar';
 import { colors, fonts } from '../../constants/theme';
-import { MEALS, MOODS, TODAY, WEEK, dayTotals, dominantMood } from '../../constants/data';
-
-const SHOW_CAL = false; // "Show calories on meals" — default OFF
+import { TODAY, WEEK, dayTotals, dominantMood, kcalOf } from '../../constants/data';
+import { useMeals } from '../../store/meals';
+import { useProfile } from '../../store/profile';
+import { getMoodById } from '../../store/moods';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const meals = useMeals();
+  const showCal = useProfile().showCalories;
 
-  const totals = dayTotals(MEALS);
-  const dom = dominantMood(MEALS);
+  const totals = dayTotals(meals);
+  const dom = meals.length ? dominantMood(meals) : 'calm';
+  const domLabel = getMoodById(dom)?.label ?? '';
   const todayLabel = WEEK.find((d) => d.today)?.label ?? 'T';
 
   const totalsRow: [string, number, string][] = [
+    ...(showCal ? ([['Cal', meals.reduce((a, m) => a + kcalOf(m.macros), 0), '']] as [string, number, string][]) : []),
     ['Protein', totals.protein, 'g'],
     ['Carbs', totals.carbs, 'g'],
     ['Fat', totals.fat, 'g'],
@@ -36,7 +41,7 @@ export default function HomeScreen() {
             <Text style={styles.eyebrow}>TODAY</Text>
             <Pressable style={styles.moodPill} onPress={() => router.push({ pathname: '/day', params: { day: todayLabel } })}>
               <MoodDot moodId={dom} size={18} ring={false} />
-              <Text style={styles.moodPillText}>Mostly {MOODS[dom].label.toLowerCase()}</Text>
+              <Text style={styles.moodPillText}>Mostly {domLabel.toLowerCase()}</Text>
             </Pressable>
           </View>
 
@@ -62,11 +67,11 @@ export default function HomeScreen() {
         {/* meal feed */}
         <View style={styles.feed}>
           <View style={{ gap: 10 }}>
-            {MEALS.map((m) => (
+            {meals.map((m) => (
               <MealCard
                 key={m.id}
                 meal={m}
-                showCal={SHOW_CAL}
+                showCal={showCal}
                 onPress={() => router.push({ pathname: '/breakdown', params: { mode: 'meal', mealId: m.id } })}
               />
             ))}

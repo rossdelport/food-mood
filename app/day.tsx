@@ -5,27 +5,30 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import BackButton from '../components/BackButton';
 import MoodDot from '../components/MoodDot';
 import MealCard from '../components/MealCard';
-import { WEEK, MOODS, mealsForDay, dayTotals, dominantMood, kcalOf, hexA } from '../constants/data';
+import { WEEK, mealsForDay, dayTotals, dominantMood, kcalOf, hexA } from '../constants/data';
+import { useMeals } from '../store/meals';
+import { useProfile } from '../store/profile';
+import { getMoodById } from '../store/moods';
 import { colors, fonts } from '../constants/theme';
-
-const SHOW_CAL = false; // "Show calories on meals" — default OFF
 
 // High-level story of a single day. No charts, no insights — just the mood and meals.
 export default function DayViewScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { day } = useLocalSearchParams<{ day?: string }>();
+  const todayMeals = useMeals();
+  const showCal = useProfile().showCalories;
 
   const wd = WEEK.find((d) => d.label === day) ?? WEEK.find((d) => d.today) ?? WEEK[1];
-  const meals = mealsForDay(wd.label);
-  const dom = dominantMood(meals);
-  const mood = MOODS[dom];
+  const meals = wd.today ? todayMeals : mealsForDay(wd.label);
+  const dom = meals.length ? dominantMood(meals) : 'calm';
+  const mood = getMoodById(dom) ?? getMoodById('calm')!;
   const totals = dayTotals(meals);
   const totalCal = meals.reduce((a, m) => a + kcalOf(m.macros), 0);
   const latestFirst = meals.slice().reverse();
 
   const summary: [string, number, string][] = [
-    ...(SHOW_CAL ? ([['', totalCal, ' cal']] as [string, number, string][]) : []),
+    ...(showCal ? ([['', totalCal, ' cal']] as [string, number, string][]) : []),
     ['Protein', totals.protein, 'g'],
     ['Carbs', totals.carbs, 'g'],
     ['Fat', totals.fat, 'g'],
@@ -76,7 +79,7 @@ export default function DayViewScreen() {
               key={m.id}
               meal={m}
               photo={64}
-              showCal={SHOW_CAL}
+              showCal={showCal}
               onPress={() => router.push({ pathname: '/breakdown', params: { mode: 'meal', mealId: m.id } })}
             />
           ))}
