@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { useProfile, updateProfile, updateTarget, updateNotif, resetProfile, setAvatar } from '../../store/profile';
 import { signOutAuth, useUserEmail } from '../../store/auth';
+import { resetSubscription } from '../../store/subscription';
 import { deleteAccount } from '../../services/account';
 import { refreshMeals } from '../../store/meals';
 import { refreshMoodDays } from '../../store/moodDays';
@@ -40,6 +41,7 @@ export default function ProfileScreen() {
       // best-effort; continue resetting local state
     }
     resetProfile();
+    await resetSubscription();
     await refreshMeals();
     await refreshMoodDays();
     await signOutAuth(); // gates back to onboarding
@@ -51,6 +53,7 @@ export default function ProfileScreen() {
   const onLogout = async () => {
     await signOutAuth();
     resetProfile(); // clear local profile so the next account starts clean
+    await resetSubscription();
     await Promise.all([refreshMeals(), refreshMoodDays()]);
   };
 

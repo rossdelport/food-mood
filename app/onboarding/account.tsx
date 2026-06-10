@@ -30,7 +30,7 @@ export default function Account() {
     if (res.session) {
       await pushProfileToRemote(); // save the onboarding profile to the new account
       hSuccess();
-      router.push('/onboarding/ready');
+      router.push('/onboarding/paywall');
     } else {
       setError('Account created — please confirm your email, then log in.');
     }
