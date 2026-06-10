@@ -62,3 +62,18 @@ export async function signOutAuth(): Promise<void> {
   session = null;
   emit();
 }
+
+// Email a password-reset code. Returns an error message or null.
+export async function requestPasswordReset(email: string): Promise<string | null> {
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
+  return error ? error.message : null;
+}
+
+// Verify the emailed code and set a new password (signs the user in). Returns
+// an error message or null.
+export async function confirmPasswordReset(email: string, code: string, newPassword: string): Promise<string | null> {
+  const { error: vErr } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: 'recovery' });
+  if (vErr) return vErr.message;
+  const { error: uErr } = await supabase.auth.updateUser({ password: newPassword });
+  return uErr ? uErr.message : null;
+}

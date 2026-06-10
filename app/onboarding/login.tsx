@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import BackButton from '../../components/BackButton';
@@ -71,6 +71,10 @@ export default function Login() {
             returnKeyType="go"
           />
 
+          <Pressable onPress={() => router.push('/onboarding/forgot')} style={styles.forgot} hitSlop={8}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </Pressable>
+
           {error && <Text style={styles.error}>{error}</Text>}
         </ScrollView>
 
@@ -92,6 +96,8 @@ const styles = StyleSheet.create({
   sub: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 22, color: colors.ink3, marginTop: 8, marginBottom: 26 },
   label: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 1.8, color: colors.ink3, marginBottom: 8 },
   input: { fontFamily: fonts.regular, fontSize: 16, color: colors.ink1, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: radii.base, paddingVertical: 15, paddingHorizontal: 16 },
+  forgot: { alignSelf: 'flex-start', marginTop: 16 },
+  forgotText: { fontFamily: fonts.medium, fontSize: 13.5, color: colors.ink2 },
   error: { fontFamily: fonts.regular, fontSize: 13.5, lineHeight: 19, color: '#9B5158', marginTop: 16 },
   footer: { paddingHorizontal: 28, paddingTop: 10 },
 });

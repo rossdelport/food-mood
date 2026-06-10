@@ -5,7 +5,6 @@ import OrbRefresh from '../../components/OrbRefresh';
 import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Toggle from '../../components/Toggle';
 import { EditIcon, ChevronRightIcon, CameraIcon } from '../../components/NavIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,7 +23,6 @@ const DELETE_RED = '#9B5158';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const profile = useProfile();
   const [editName, setEditName] = useState(false);
   const [editTag, setEditTag] = useState(false);
@@ -197,10 +195,6 @@ export default function ProfileScreen() {
               <ChevronRightIcon color={colors.ink3} />
             </Pressable>
           ))}
-          <Pressable style={[styles.aboutRow, styles.fieldDivider]} onPress={() => router.push('/onboarding/welcome')}>
-            <Text style={styles.fieldLabel}>Replay onboarding</Text>
-            <ChevronRightIcon color={colors.ink3} />
-          </Pressable>
           <View style={[styles.fieldRow, styles.fieldDivider]}>
             <Text style={[styles.fieldLabel, { flex: 1 }]}>Turn off notifications</Text>
             <Toggle on={!profile.notif.on} onChange={(v) => { updateNotif({ on: !v }); if (v) Notifications.cancelAllScheduledNotificationsAsync().catch(() => {}); flash(v ? 'Notifications off' : 'Notifications on', 'bell'); }} />
