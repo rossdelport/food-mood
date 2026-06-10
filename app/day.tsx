@@ -20,7 +20,9 @@ export default function DayViewScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ date?: string }>();
-  const showCal = useProfile().showCalories;
+  const profile = useProfile();
+  const showCal = profile.showCalories;
+  const targets = profile.targets;
 
   const todayKey = format(new Date(), 'yyyy-MM-dd');
   const dateKey = params.date || todayKey;
@@ -53,11 +55,12 @@ export default function DayViewScreen() {
   const totalCal = meals.reduce((a, m) => a + (m.calories ?? kcalOf(m.macros)), 0);
   const latestFirst = meals.slice().reverse();
 
-  const summary: [string, number, string][] = [
-    ...(showCal ? ([['', totalCal, ' cal']] as [string, number, string][]) : []),
-    ['Protein', totals.protein, 'g'],
-    ['Carbs', totals.carbs, 'g'],
-    ['Fat', totals.fat, 'g'],
+  // [label, current, goal, unit]
+  const summary: [string, number, number, string][] = [
+    ...(showCal ? ([['', totalCal, targets.calories, ' cal']] as [string, number, number, string][]) : []),
+    ['Protein', totals.protein, targets.protein, 'g'],
+    ['Carbs', totals.carbs, targets.carbs, 'g'],
+    ['Fat', totals.fat, targets.fat, 'g'],
   ];
 
   return (
@@ -82,12 +85,13 @@ export default function DayViewScreen() {
 
         {meals.length > 0 && (
           <View style={styles.summary}>
-            {summary.map(([label, value, unit], i) => (
+            {summary.map(([label, value, goal, unit], i) => (
               <View key={label + unit} style={styles.summaryItem}>
                 {i > 0 && <View style={styles.summaryDot} />}
                 <Text style={styles.summaryText}>
                   {label ? `${label} ` : ''}
-                  <Text style={styles.summaryValue}>{value}{unit}</Text>
+                  <Text style={styles.summaryValue}>{value}</Text>
+                  <Text style={styles.summaryGoal}> / {goal}{unit}</Text>
                 </Text>
               </View>
             ))}
@@ -139,11 +143,12 @@ const styles = StyleSheet.create({
   noMoodDot: { width: 62, height: 62, borderRadius: 31, backgroundColor: colors.chip, borderWidth: 1, borderColor: colors.line, borderStyle: 'dashed' },
   moodCaption: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.ink3 },
   moodLabel: { fontFamily: fonts.regular, fontSize: 20, color: colors.ink1, marginTop: 2 },
-  summary: { flexDirection: 'row', alignItems: 'center', marginTop: 22 },
+  summary: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', rowGap: 6, marginTop: 22 },
   summaryItem: { flexDirection: 'row', alignItems: 'center' },
   summaryDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.ink3, opacity: 0.5, marginHorizontal: 10 },
   summaryText: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.ink3 },
   summaryValue: { fontFamily: fonts.medium, color: colors.ink2 },
+  summaryGoal: { fontFamily: fonts.regular, color: colors.ink3 },
   divider: { height: 1, backgroundColor: colors.line, marginVertical: 20 },
   logBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: colors.accent, borderRadius: radii.button, paddingVertical: 16, ...buttonShadow },
   logText: { fontFamily: fonts.medium, fontSize: 15.5, letterSpacing: 0.2, color: colors.accentText },

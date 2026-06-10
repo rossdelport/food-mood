@@ -23,7 +23,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const meals = useMeals();
-  const showCal = useProfile().showCalories;
+  const profile = useProfile();
+  const showCal = profile.showCalories;
+  const targets = profile.targets;
 
   const todayKey = format(new Date(), 'yyyy-MM-dd');
   const goToDay = (dateKey: string) => router.push({ pathname: '/day', params: { date: dateKey } });
@@ -40,11 +42,12 @@ export default function HomeScreen() {
   const dom = moodMeals.length ? dominantMood(moodMeals) : null;
   const domLabel = dom ? getMoodById(dom)?.label ?? '' : '';
 
-  const totalsRow: [string, number, string][] = [
-    ...(showCal ? ([['Cal', meals.reduce((a, m) => a + caloriesOf(m), 0), '']] as [string, number, string][]) : []),
-    ['Protein', totals.protein, 'g'],
-    ['Carbs', totals.carbs, 'g'],
-    ['Fat', totals.fat, 'g'],
+  // [label, current, goal, unit]
+  const totalsRow: [string, number, number, string][] = [
+    ...(showCal ? ([['Cal', meals.reduce((a, m) => a + caloriesOf(m), 0), targets.calories, '']] as [string, number, number, string][]) : []),
+    ['Protein', totals.protein, targets.protein, 'g'],
+    ['Carbs', totals.carbs, targets.carbs, 'g'],
+    ['Fat', totals.fat, targets.fat, 'g'],
   ];
 
   return (
@@ -68,10 +71,10 @@ export default function HomeScreen() {
 
           {meals.length > 0 && (
             <View style={styles.totals}>
-              {totalsRow.map(([label, value, unit]) => (
+              {totalsRow.map(([label, value, goal, unit]) => (
                 <View key={label} style={styles.totalItem}>
                   <Text style={styles.totalValue}>
-                    {value}<Text style={styles.totalUnit}>{unit}</Text>
+                    {value}<Text style={styles.totalGoal}> / {goal}{unit}</Text>
                   </Text>
                   <Text style={styles.totalLabel}>{label.toUpperCase()}</Text>
                 </View>
@@ -125,10 +128,10 @@ const styles = StyleSheet.create({
   moodPill: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.chip, borderRadius: 999, paddingVertical: 6, paddingLeft: 8, paddingRight: 12 },
   moodPillText: { fontFamily: fonts.medium, fontSize: 12.5, color: colors.ink2 },
   date: { fontFamily: fonts.light, fontSize: 30, lineHeight: 33, letterSpacing: -0.4, color: colors.ink1, marginTop: 12 },
-  totals: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, marginTop: 18 },
+  totals: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16, marginTop: 18 },
   totalItem: { alignItems: 'flex-end' },
   totalValue: { fontFamily: fonts.regular, fontSize: 18, letterSpacing: -0.2, color: colors.ink1, fontVariant: ['tabular-nums'] },
-  totalUnit: { fontFamily: fonts.regular, fontSize: 12, color: colors.ink3 },
+  totalGoal: { fontFamily: fonts.regular, fontSize: 12, color: colors.ink3, fontVariant: ['tabular-nums'] },
   totalLabel: { fontFamily: fonts.regular, fontSize: 10, letterSpacing: 1, color: colors.ink3, marginTop: 1 },
   divider: { height: 1, backgroundColor: colors.line, marginHorizontal: 24 },
   logWrap: { paddingHorizontal: 16, paddingTop: 16 },
