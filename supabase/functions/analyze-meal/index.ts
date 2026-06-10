@@ -21,11 +21,11 @@ const json = (body: unknown, status = 200) =>
 
 const MACRO_TOOL = {
   name: 'log_macros',
-  description: 'Record the estimated macronutrients and calories for the meal in the photo.',
+  description: 'Record the estimated macronutrients and calories for the food or drink in the photo.',
   input_schema: {
     type: 'object',
     properties: {
-      title: { type: 'string', description: "Short 2-4 word name for the meal, e.g. 'Oat bowl with berries'." },
+      title: { type: 'string', description: "Short 2-4 word name for the food or drink, e.g. 'Oat bowl with berries' or 'Chocolate milkshake'." },
       protein: { type: 'integer', description: 'Estimated grams of protein for the portion shown.' },
       carbs: { type: 'integer', description: 'Estimated grams of carbohydrates.' },
       fat: { type: 'integer', description: 'Estimated grams of fat.' },
@@ -37,11 +37,17 @@ const MACRO_TOOL = {
   },
 };
 
-const SYSTEM = `You are a nutrition estimation assistant for a food-tracking app.
-Given a photo of a meal, estimate the macronutrients (protein, carbs, fat) in grams
-and total calories for the portion actually shown. Be realistic about portion size.
-Always respond by calling the log_macros tool. If the image is clearly not food,
-return zeros for all macros and a title of "Not a meal".`;
+const SYSTEM = `You are a nutrition estimation assistant for a food-and-drink tracking app.
+Given a photo of a food OR a drink (a meal, snack, or beverage), estimate the
+macronutrients (protein, carbs, fat) in grams and total calories for the portion or
+serving actually shown. Be realistic about portion/serving size.
+For drinks, estimate calories from the serving — e.g. sugar in an energy drink or
+soda, dairy/syrup in a milkshake or latte; black coffee, tea, water and diet drinks
+are near-zero. For alcohol, include calories from the alcohol even though it is not
+protein, carbs or fat.
+Always respond by calling the log_macros tool. Only if the image is clearly not
+something a person can eat or drink, return zeros for all macros and a title of
+"Not food or drink".`;
 
 // Decode the user id from the (already JWT-verified) bearer token.
 function userIdFromAuth(req: Request): string | null {
@@ -104,7 +110,7 @@ Deno.serve(async (req) => {
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: mimeType, data: imageBase64 } },
-          { type: 'text', text: 'Estimate the macros and calories for this meal.' },
+          { type: 'text', text: 'Estimate the macros and calories for this food or drink.' },
         ],
       },
     ],
