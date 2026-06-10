@@ -1,11 +1,10 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import OnbShell from '../../components/onboarding/OnbShell';
 import OnbButton from '../../components/onboarding/OnbButton';
 import { useProfile, updateNotif } from '../../store/profile';
-import { MOODS, MOOD_ORDER } from '../../constants/data';
 import { colors, fonts } from '../../constants/theme';
 
 export default function Reminders() {
@@ -23,12 +22,7 @@ export default function Reminders() {
       <View style={styles.center}>
         {/* dummy lock-screen notification */}
         <View style={styles.notif}>
-          <LinearGradient
-            colors={MOOD_ORDER.map((id) => MOODS[id].color) as [string, string, ...string[]]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={styles.notifIcon}
-          />
+          <Image source={require('../../assets/images/icon.png')} style={styles.notifIcon} contentFit="cover" />
           <View style={{ flex: 1, minWidth: 0 }}>
             <View style={styles.notifTop}>
               <Text style={styles.notifApp}>FOOD MOOD</Text>
@@ -72,7 +66,7 @@ const styles = StyleSheet.create({
   sub: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 22, color: colors.ink3, marginTop: 8 },
   center: { flex: 1, justifyContent: 'center', paddingHorizontal: 30 },
   notif: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 20, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 3 },
-  notifIcon: { width: 40, height: 40, borderRadius: 11 },
+  notifIcon: { width: 40, height: 40, borderRadius: 11, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
   notifTop: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   notifApp: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.2, color: colors.ink2 },
   notifNow: { fontFamily: fonts.regular, fontSize: 11, color: colors.ink3 },
