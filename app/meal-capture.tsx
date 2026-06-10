@@ -64,8 +64,12 @@ export default function MealCaptureScreen() {
       // Reminders only make sense for meals logged today.
       const reminderId = isToday && profile.notif.on ? await scheduleMealReminder(id, profile.notif.mins) : 'off';
       await Promise.all([refreshMeals(), refreshMoodDays()]);
-      if (date) router.back(); // return to the day view that launched the log
-      else router.dismissAll();
+      if (date) {
+        router.back(); // back-dated: return to the day view that launched the log
+      } else {
+        router.dismissAll(); // close the capture modals…
+        router.navigate('/'); // …and land on Home so the new meal is front and centre
+      }
       showToast('Meal logged', 'check');
       if (isToday && profile.notif.on && !reminderId) {
         Alert.alert('Reminder not set', 'Allow notifications to get a gentle mood check-in after your meals.');
