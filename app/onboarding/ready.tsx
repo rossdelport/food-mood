@@ -10,6 +10,8 @@ export default function Ready() {
   const router = useRouter();
   const start = () => {
     signIn();
+    // Clear the onboarding stack so Home becomes the root (not left underneath).
+    if (router.canDismiss()) router.dismissAll();
     router.replace('/');
   };
   return (

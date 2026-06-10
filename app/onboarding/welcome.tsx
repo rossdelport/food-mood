@@ -11,6 +11,7 @@ export default function Welcome() {
   const router = useRouter();
   const haveAccount = () => {
     signIn();
+    if (router.canDismiss()) router.dismissAll();
     router.replace('/');
   };
   return (
