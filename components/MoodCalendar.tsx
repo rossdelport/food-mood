@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { startOfMonth, addMonths, getDaysInMonth, startOfDay, format } from 'date-fns';
-import { useMoodDays } from '../store/moodDays';
+import { useMoodDays, useMealDays } from '../store/moodDays';
 import { getMoodById } from '../store/moods';
 import { colors, fonts, radius as radii } from '../constants/theme';
 
@@ -15,6 +15,7 @@ type Props = { onDay?: (dateKey: string) => void };
 // mood are filled; future and un-logged days are plain.
 export default function MoodCalendar({ onDay }: Props) {
   const moodDays = useMoodDays();
+  const mealDays = useMealDays();
   const [off, setOff] = useState(0);
   const today = new Date();
   const todayKey = format(today, 'yyyy-MM-dd');
@@ -50,10 +51,11 @@ export default function MoodCalendar({ onDay }: Props) {
           const isFuture = startOfDay(date) > startOfDay(today);
           const moodId = !isFuture ? moodDays[key] : undefined;
           const mood = moodId ? getMoodById(moodId) : null;
+          const hasMeal = !isFuture && !!mealDays[key];
           const isToday = key === todayKey;
           const r = Math.max(7, radii.base);
           return (
-            <Pressable key={d} style={styles.cell} disabled={isFuture} onPress={() => mood && onDay?.(key)}>
+            <Pressable key={d} style={styles.cell} disabled={!hasMeal} onPress={() => hasMeal && onDay?.(key)}>
               <View
                 style={[
                   styles.tile,
@@ -74,6 +76,7 @@ export default function MoodCalendar({ onDay }: Props) {
                 >
                   {d}
                 </Text>
+                {hasMeal && !mood && <View style={styles.pendingMark} />}
               </View>
             </Pressable>
           );
@@ -107,4 +110,5 @@ const styles = StyleSheet.create({
   tileToday: { borderWidth: 2, borderColor: colors.ink1 },
   dayNum: { fontFamily: fonts.regular, fontSize: 12 },
   dayNumToday: { fontFamily: fonts.semibold },
+  pendingMark: { position: 'absolute', bottom: 4, width: 4, height: 4, borderRadius: 2, backgroundColor: colors.ink3 },
 });

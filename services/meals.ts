@@ -100,28 +100,32 @@ export async function listMealsForDate(dateKey: string): Promise<Meal[]> {
   return Promise.all((data ?? []).map(rowToMeal));
 }
 
-// Dominant mood per local day across a range → { 'yyyy-MM-dd': moodId }.
-// Only counts meals that have a logged mood.
-export async function listMoodDays(fromISO: string, toISO: string): Promise<Record<string, string>> {
+export type DayStats = {
+  moodByDay: Record<string, string>; // day -> dominant logged mood id
+  mealDays: Record<string, true>; // days that have any logged meal
+};
+
+// Aggregate meals per local day across a range, for the spectrum + calendar.
+export async function listDayStats(fromISO: string, toISO: string): Promise<DayStats> {
   await ensureSession();
   const { data, error } = await supabase
     .from('meals')
     .select('mood, captured_at')
-    .not('mood', 'is', null)
     .gte('captured_at', fromISO)
     .lte('captured_at', toISO);
-  if (error) return {};
-  const byDay: Record<string, Record<string, number>> = {};
+  if (error) return { moodByDay: {}, mealDays: {} };
+  const counts: Record<string, Record<string, number>> = {};
+  const mealDays: Record<string, true> = {};
   for (const r of data ?? []) {
-    if (!r.mood) continue;
     const key = format(new Date(r.captured_at), 'yyyy-MM-dd');
-    (byDay[key] ??= {})[r.mood] = (byDay[key][r.mood] || 0) + 1;
+    mealDays[key] = true;
+    if (r.mood) (counts[key] ??= {})[r.mood] = (counts[key][r.mood] || 0) + 1;
   }
-  const out: Record<string, string> = {};
-  for (const [key, counts] of Object.entries(byDay)) {
-    out[key] = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+  const moodByDay: Record<string, string> = {};
+  for (const [key, c] of Object.entries(counts)) {
+    moodByDay[key] = Object.keys(c).sort((a, b) => c[b] - c[a])[0];
   }
-  return out;
+  return { moodByDay, mealDays };
 }
 
 export async function getMealById(id: string): Promise<Meal | null> {

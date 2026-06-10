@@ -1,10 +1,11 @@
-// Dominant mood per day (from real logged meals) — powers the week spectrum
-// and the monthly calendar. Reactive; refreshed when meals/moods change.
+// Per-day aggregates from real logged meals — powers the week spectrum and the
+// monthly calendar. Holds both the dominant mood per day and which days have
+// any meal logged. Reactive; refreshed when meals/moods change.
 import { useSyncExternalStore } from 'react';
 import { subDays, startOfDay } from 'date-fns';
-import { listMoodDays } from '../services/meals';
+import { listDayStats, type DayStats } from '../services/meals';
 
-let moodDays: Record<string, string> = {};
+let stats: DayStats = { moodByDay: {}, mealDays: {} };
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
@@ -13,7 +14,7 @@ async function load() {
   try {
     const from = startOfDay(subDays(new Date(), 365)).toISOString();
     const to = new Date().toISOString();
-    moodDays = await listMoodDays(from, to);
+    stats = await listDayStats(from, to);
   } catch {
     // keep what we have
   }
@@ -29,5 +30,9 @@ export async function refreshMoodDays() {
 }
 
 export function useMoodDays(): Record<string, string> {
-  return useSyncExternalStore(subscribe, () => moodDays);
+  return useSyncExternalStore(subscribe, () => stats.moodByDay);
+}
+
+export function useMealDays(): Record<string, true> {
+  return useSyncExternalStore(subscribe, () => stats.mealDays);
 }

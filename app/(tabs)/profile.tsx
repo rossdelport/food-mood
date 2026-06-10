@@ -7,8 +7,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Toggle from '../../components/Toggle';
 import { EditIcon, ChevronRightIcon, CameraIcon } from '../../components/NavIcons';
-import { useProfile, updateProfile, updateTarget, updateNotif } from '../../store/profile';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+import { useProfile, updateProfile, updateTarget, updateNotif, resetProfile } from '../../store/profile';
 import { signOut } from '../../store/auth';
+import { deleteAccount } from '../../services/account';
+import { refreshMeals } from '../../store/meals';
+import { refreshMoodDays } from '../../store/moodDays';
 import { colors, fonts, radius as radii, macroColors } from '../../constants/theme';
 import type { Targets } from '../../store/profile';
 
@@ -28,6 +33,21 @@ export default function ProfileScreen() {
     setToast(m);
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 1900);
+  };
+
+  const onDeleteAccount = async () => {
+    setConfirmDel(false);
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      await deleteAccount();
+      await AsyncStorage.clear();
+    } catch {
+      // best-effort; continue resetting local state
+    }
+    resetProfile();
+    await refreshMeals();
+    await refreshMoodDays();
+    signOut(); // gates back to onboarding
   };
 
   const initial = (profile.name || '?').trim().charAt(0).toUpperCase() || '?';
@@ -180,7 +200,7 @@ export default function ProfileScreen() {
           </Pressable>
           <View style={[styles.fieldRow, styles.fieldDivider]}>
             <Text style={[styles.fieldLabel, { flex: 1 }]}>Turn off notifications</Text>
-            <Toggle on={!profile.notif.on} onChange={(v) => { updateNotif({ on: !v }); flash(v ? 'Notifications off' : 'Notifications on'); }} />
+            <Toggle on={!profile.notif.on} onChange={(v) => { updateNotif({ on: !v }); if (v) Notifications.cancelAllScheduledNotificationsAsync().catch(() => {}); flash(v ? 'Notifications off' : 'Notifications on'); }} />
           </View>
           <Text style={[styles.help, { marginTop: 14 }]}>Food Mood · Version 1.0.0</Text>
         </SectionCard>
@@ -196,7 +216,7 @@ export default function ProfileScreen() {
               <Pressable style={styles.cancelBtn} onPress={() => setConfirmDel(false)}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </Pressable>
-              <Pressable style={styles.deleteBtn} onPress={() => { setConfirmDel(false); flash('Account deleted (demo)'); }}>
+              <Pressable style={styles.deleteBtn} onPress={onDeleteAccount}>
                 <Text style={styles.deleteText}>Delete</Text>
               </Pressable>
             </View>

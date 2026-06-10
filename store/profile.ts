@@ -16,7 +16,7 @@ export type Profile = {
   notif: { on: boolean; mins: number };
 };
 
-let profile: Profile = {
+const DEFAULT_PROFILE: Profile = {
   name: '',
   tagline: 'Tracking mood + macros',
   avatar: null,
@@ -26,6 +26,8 @@ let profile: Profile = {
   showCalories: false,
   notif: { on: true, mins: 60 },
 };
+
+let profile: Profile = { ...DEFAULT_PROFILE };
 
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
@@ -41,6 +43,12 @@ export async function hydrateProfile() {
 
 export function useProfile(): Profile {
   return useSyncExternalStore(subscribe, () => profile);
+}
+
+// Reset to defaults in memory (used by delete-account).
+export function resetProfile() {
+  profile = { ...DEFAULT_PROFILE };
+  emit();
 }
 
 export function updateProfile(patch: Partial<Profile>) {
