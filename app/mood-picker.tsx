@@ -11,6 +11,7 @@ import { setMealMood } from '../services/meals';
 import { refreshMeals } from '../store/meals';
 import { refreshMoodDays } from '../store/moodDays';
 import { showToast } from '../store/toast';
+import { hSelect, hSuccess } from '../services/haptics';
 import { colors, fonts, radius as radii, buttonShadow } from '../constants/theme';
 
 // Post-meal reminder: log how a captured meal left you feeling.
@@ -29,6 +30,7 @@ export default function MoodPickerScreen() {
       if (mealId) {
         await setMealMood(mealId, sel);
         await Promise.all([refreshMeals(), refreshMoodDays()]);
+        hSuccess();
         showToast('Mood logged', 'check');
         router.replace({ pathname: '/breakdown', params: { mealId } });
         return;
@@ -84,7 +86,7 @@ export default function MoodPickerScreen() {
             return (
               <Pressable
                 key={mood.id}
-                onPress={() => setSel(mood.id)}
+                onPress={() => { hSelect(); setSel(mood.id); }}
                 style={[styles.row, active && styles.rowActive, { opacity: dim ? 0.42 : 1 }]}
               >
                 <View style={[styles.orb, { width: size, height: size, borderRadius: size / 2, backgroundColor: mood.color }]}>

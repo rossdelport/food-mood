@@ -3,6 +3,7 @@ import { View, Animated, ScrollView, StyleSheet, type StyleProp, type ViewStyle,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOODS, MOOD_ORDER } from '../constants/data';
 import { showToast } from '../store/toast';
+import { hLight } from '../services/haptics';
 
 const ORBS = MOOD_ORDER.map((id) => MOODS[id].color);
 const THRESHOLD = 96; // pull distance (px) at which all 5 orbs are lit → arm refresh
@@ -29,6 +30,7 @@ export default function OrbRefresh({ onRefresh, children, contentContainerStyle,
   const exit = useRef(new Animated.Value(1)).current; // group fade-out on collapse
   const offset = useRef(0);
   const refreshing = useRef(false);
+  const armed = useRef(false); // crossed the all-5-lit threshold
 
   const litOpacity = lit.interpolate({ inputRange: [0, 0.06], outputRange: [0, 1], extrapolate: 'clamp' });
   const containerOpacity = Animated.multiply(litOpacity, exit);
@@ -38,7 +40,12 @@ export default function OrbRefresh({ onRefresh, children, contentContainerStyle,
     const y = e.nativeEvent.contentOffset.y;
     offset.current = y;
     // drive the orb lighting from the overscroll pull (ignored once refreshing)
-    if (!refreshing.current) lit.setValue(Math.max(0, Math.min(1, -y / THRESHOLD)));
+    if (refreshing.current) return;
+    const p = -y / THRESHOLD;
+    lit.setValue(Math.max(0, Math.min(1, p)));
+    // one soft tick the moment all 5 orbs light up (the "release to refresh" point)
+    if (p >= 1 && !armed.current) { armed.current = true; hLight(); }
+    else if (p < 1 && armed.current) { armed.current = false; }
   };
 
   const trigger = async () => {
@@ -56,6 +63,7 @@ export default function OrbRefresh({ onRefresh, children, contentContainerStyle,
       lit.setValue(0);
       exit.setValue(1);
       refreshing.current = false;
+      armed.current = false;
       showToast('Reloaded', 'refresh');
     });
   };

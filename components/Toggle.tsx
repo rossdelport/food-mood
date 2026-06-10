@@ -1,11 +1,12 @@
 import { Pressable, View, StyleSheet } from 'react-native';
 import { colors } from '../constants/theme';
+import { hSelect } from '../services/haptics';
 
 // Small iOS-style switch.
 export default function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
   return (
     <Pressable
-      onPress={() => onChange(!on)}
+      onPress={() => { hSelect(); onChange(!on); }}
       style={[styles.track, { backgroundColor: on ? colors.accent : colors.line, justifyContent: on ? 'flex-end' : 'flex-start' }]}
     >
       <View style={styles.knob} />

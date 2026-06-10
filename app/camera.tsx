@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LibraryIcon, FlipIcon, CloseIcon } from '../components/NavIcons';
+import { hMedium, hSelect } from '../services/haptics';
 import { colors, fonts, radius as radii } from '../constants/theme';
 
 // Custom capture screen. The library shortcut only exists here, inside the
@@ -24,6 +25,7 @@ export default function CameraScreen() {
   const takePhoto = async () => {
     if (busy) return;
     setBusy(true);
+    hMedium(); // shutter feel
     try {
       const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
       if (photo?.uri) goToMood(photo.uri);
@@ -33,6 +35,7 @@ export default function CameraScreen() {
   };
 
   const openLibrary = async () => {
+    hSelect();
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return;
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] });

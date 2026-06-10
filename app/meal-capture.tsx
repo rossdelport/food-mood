@@ -14,6 +14,7 @@ import { refreshMeals } from '../store/meals';
 import { refreshMoodDays } from '../store/moodDays';
 import { useProfile } from '../store/profile';
 import { showToast } from '../store/toast';
+import { hSuccess, hWarning } from '../services/haptics';
 import { macroGrams } from '../constants/data';
 import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../constants/theme';
 import type { DetectedMeal } from '../types';
@@ -38,7 +39,9 @@ export default function MealCaptureScreen() {
     setAnalyzing(true);
     setError(null);
     try {
-      setDetected(await detectMacros(img));
+      const d = await detectMacros(img);
+      setDetected(d);
+      if (/not\s+(food|a meal)/i.test(d.title)) hWarning();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not read this meal');
     } finally {
@@ -76,6 +79,7 @@ export default function MealCaptureScreen() {
         router.dismissAll(); // close the capture modals…
         router.navigate('/'); // …and land on Home so the new meal is front and centre
       }
+      hSuccess();
       showToast('Meal logged', 'check');
       if (isToday && profile.notif.on && !reminderId) {
         Alert.alert('Reminder not set', 'Allow notifications to get a gentle mood check-in after your meals.');

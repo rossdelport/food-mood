@@ -4,11 +4,13 @@ import OnbShell from '../../components/onboarding/OnbShell';
 import OnbButton from '../../components/onboarding/OnbButton';
 import DriftingSpectrum from '../../components/onboarding/DriftingSpectrum';
 import { signIn } from '../../store/auth';
+import { hSuccess } from '../../services/haptics';
 import { colors, fonts } from '../../constants/theme';
 
 export default function Ready() {
   const router = useRouter();
   const start = () => {
+    hSuccess();
     signIn();
     // Clear the onboarding stack so Home becomes the root (not left underneath).
     if (router.canDismiss()) router.dismissAll();

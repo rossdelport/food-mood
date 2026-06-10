@@ -6,6 +6,7 @@ import MoodDot from '../../components/MoodDot';
 import OrbRefresh from '../../components/OrbRefresh';
 import { EditIcon, PlusIcon } from '../../components/NavIcons';
 import { useMoods, addMood, updateMood, removeMood, MOOD_SWATCHES } from '../../store/moods';
+import { hSelect, hSuccess, hWarning } from '../../services/haptics';
 import { colors, fonts, radius as radii } from '../../constants/theme';
 
 const DELETE_RED = '#9B5158';
@@ -25,6 +26,7 @@ export default function MoodsScreen() {
     if (!editing) return;
     if (editing.mode === 'new') addMood(editing.label, editing.sub, editing.color);
     else updateMood(editing.id!, editing.label, editing.sub, editing.color);
+    hSuccess();
     setEditing(null);
   };
 
@@ -114,7 +116,7 @@ export default function MoodsScreen() {
                   {MOOD_SWATCHES.map((c) => (
                     <Pressable
                       key={c}
-                      onPress={() => setEditing((e) => e && { ...e, color: c })}
+                      onPress={() => { hSelect(); setEditing((e) => e && { ...e, color: c }); }}
                       style={[styles.swatch, { backgroundColor: c }, editing.color === c && styles.swatchOn]}
                     />
                   ))}
@@ -122,7 +124,7 @@ export default function MoodsScreen() {
 
                 <View style={styles.sheetActions}>
                   {editing.mode === 'edit' && (
-                    <Pressable onPress={() => { removeMood(editing.id!); setEditing(null); }} disabled={moods.length <= 1}>
+                    <Pressable onPress={() => { hWarning(); removeMood(editing.id!); setEditing(null); }} disabled={moods.length <= 1}>
                       <Text style={[styles.deleteLink, moods.length <= 1 && { color: colors.ink3 }]}>Delete</Text>
                     </Pressable>
                   )}

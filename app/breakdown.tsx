@@ -14,6 +14,7 @@ import { refreshMoodDays } from '../store/moodDays';
 import { useProfile } from '../store/profile';
 import { getMoodById, useMoods } from '../store/moods';
 import { showToast } from '../store/toast';
+import { hSelect, hSuccess, hWarning } from '../services/haptics';
 import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../constants/theme';
 import type { Meal } from '../types';
 
@@ -63,6 +64,7 @@ export default function BreakdownScreen() {
       setMeal({ ...meal, title: draft.title, macros: { protein: draft.protein, carbs: draft.carbs, fat: draft.fat }, calories: draft.calories, mood: draft.mood ?? meal.mood });
       await Promise.all([refreshMeals(), refreshMoodDays()]);
       setEditing(false);
+      hSuccess();
       showToast('Updated', 'edit');
     } catch {
       // keep editing
@@ -74,6 +76,7 @@ export default function BreakdownScreen() {
   const onDelete = async () => {
     if (!meal) return;
     setConfirmDel(false);
+    hWarning();
     try {
       await deleteMeal(meal.id);
       await refreshMeals();
@@ -134,7 +137,7 @@ export default function BreakdownScreen() {
                   {moods.map((m) => {
                     const on = draft.mood === m.id;
                     return (
-                      <Pressable key={m.id} style={[styles.moodItem, { opacity: draft.mood && !on ? 0.5 : 1 }]} onPress={() => patch({ mood: m.id })}>
+                      <Pressable key={m.id} style={[styles.moodItem, { opacity: draft.mood && !on ? 0.5 : 1 }]} onPress={() => { hSelect(); patch({ mood: m.id }); }}>
                         <View style={[styles.moodOrb, { backgroundColor: m.color }, on && styles.moodOrbOn]} />
                         <Text style={[styles.moodName, on && styles.moodNameOn]} numberOfLines={1}>{m.label}</Text>
                       </Pressable>
