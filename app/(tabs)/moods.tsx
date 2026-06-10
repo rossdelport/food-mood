@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { View, Text, Pressable, TextInput, StyleSheet, Modal, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MoodDot from '../../components/MoodDot';
 import OrbRefresh from '../../components/OrbRefresh';
-import { EditIcon, PlusIcon, CameraIcon } from '../../components/NavIcons';
+import { EditIcon, PlusIcon } from '../../components/NavIcons';
 import { useMoods, addMood, updateMood, removeMood, MOOD_SWATCHES } from '../../store/moods';
 import { colors, fonts, radius as radii } from '../../constants/theme';
 
@@ -37,9 +38,7 @@ export default function MoodsScreen() {
 
         {/* how it appears — mock notification */}
         <View style={styles.notif}>
-          <View style={styles.notifIcon}>
-            <CameraIcon color={colors.accentText} size={18} />
-          </View>
+          <Image source={require('../../assets/images/icon.png')} style={styles.notifIcon} contentFit="cover" />
           <View style={{ flex: 1, minWidth: 0 }}>
             <View style={styles.notifTop}>
               <Text style={styles.notifApp}>Food Mood</Text>
@@ -150,7 +149,7 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.light, fontSize: 30, letterSpacing: -0.4, color: colors.ink1 },
   intro: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 21, color: colors.ink2, marginTop: 10 },
   notif: { flexDirection: 'row', gap: 11, alignItems: 'center', backgroundColor: colors.chip, borderRadius: radii.base + 8, padding: 12, marginTop: 18 },
-  notifIcon: { width: 34, height: 34, borderRadius: 9, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  notifIcon: { width: 34, height: 34, borderRadius: 9, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
   notifTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   notifApp: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ink1 },
   notifNow: { fontFamily: fonts.regular, fontSize: 10.5, color: colors.ink3 },
