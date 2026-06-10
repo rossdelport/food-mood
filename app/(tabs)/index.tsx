@@ -85,7 +85,11 @@ export default function HomeScreen() {
                 key={m.id}
                 meal={m}
                 showCal={showCal}
-                onPress={() => router.push({ pathname: '/breakdown', params: { mode: 'meal', mealId: m.id } })}
+                onPress={() =>
+                  m.mood
+                    ? router.push({ pathname: '/breakdown', params: { mode: 'meal', mealId: m.id } })
+                    : router.push({ pathname: '/mood-picker', params: { mealId: m.id } })
+                }
               />
             ))}
           </View>
