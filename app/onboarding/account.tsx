@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import BackButton from '../../components/BackButton';
 import OnbButton from '../../components/onboarding/OnbButton';
 import { signUpEmail } from '../../store/auth';
+import { pushProfileToRemote } from '../../store/profile';
 import { hSuccess } from '../../services/haptics';
 import { colors, fonts, radius as radii } from '../../constants/theme';
 
@@ -27,6 +28,7 @@ export default function Account() {
     setBusy(false);
     if (res.error) { setError(res.error); return; }
     if (res.session) {
+      await pushProfileToRemote(); // save the onboarding profile to the new account
       hSuccess();
       router.push('/onboarding/ready');
     } else {

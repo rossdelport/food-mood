@@ -5,6 +5,9 @@ import { useRouter } from 'expo-router';
 import BackButton from '../../components/BackButton';
 import OnbButton from '../../components/onboarding/OnbButton';
 import { signInEmail } from '../../store/auth';
+import { syncProfileFromRemote } from '../../store/profile';
+import { refreshMeals } from '../../store/meals';
+import { refreshMoodDays } from '../../store/moodDays';
 import { colors, fonts, radius as radii } from '../../constants/theme';
 
 export default function Login() {
@@ -22,8 +25,10 @@ export default function Login() {
     setError(null);
     setBusy(true);
     const err = await signInEmail(e, password);
+    if (err) { setBusy(false); setError(err); return; }
+    // pull this account's profile + data before entering the app
+    await Promise.all([syncProfileFromRemote(), refreshMeals(), refreshMoodDays()]);
     setBusy(false);
-    if (err) { setError(err); return; }
     if (router.canDismiss()) router.dismissAll();
     router.replace('/');
   };

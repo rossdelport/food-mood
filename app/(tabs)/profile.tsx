@@ -10,7 +10,7 @@ import Toggle from '../../components/Toggle';
 import { EditIcon, ChevronRightIcon, CameraIcon } from '../../components/NavIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import { useProfile, updateProfile, updateTarget, updateNotif, resetProfile } from '../../store/profile';
+import { useProfile, updateProfile, updateTarget, updateNotif, resetProfile, setAvatar } from '../../store/profile';
 import { signOutAuth, useUserEmail } from '../../store/auth';
 import { deleteAccount } from '../../services/account';
 import { refreshMeals } from '../../store/meals';
@@ -52,6 +52,7 @@ export default function ProfileScreen() {
 
   const onLogout = async () => {
     await signOutAuth();
+    resetProfile(); // clear local profile so the next account starts clean
     await Promise.all([refreshMeals(), refreshMoodDays()]);
   };
 
@@ -59,7 +60,7 @@ export default function ProfileScreen() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return;
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1] });
-    if (!result.canceled && result.assets?.[0]) updateProfile({ avatar: result.assets[0].uri });
+    if (!result.canceled && result.assets?.[0]) setAvatar(result.assets[0].uri);
   };
 
   const clampTarget = (key: keyof Targets, text: string, max: number) => {
