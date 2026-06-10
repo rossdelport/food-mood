@@ -88,7 +88,7 @@ export default function JournalEntryScreen() {
             </View>
           ) : (
             <Pressable style={styles.linkAdd} onPress={() => setLinking(true)}>
-              <Text style={styles.linkAddText}>↳ Link to a meal or day</Text>
+              <Text style={styles.linkAddText}>↳ Link to a day</Text>
             </Pressable>
           )}
         </View>
