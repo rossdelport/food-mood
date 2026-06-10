@@ -71,10 +71,10 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16 },
   divider: { borderTopWidth: 1, borderTopColor: colors.line },
   label: { fontFamily: fonts.regular, fontSize: 15.5, color: colors.ink1 },
-  unit: { fontFamily: fonts.regular, fontSize: 12, color: colors.ink3 },
+  unit: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink3 },
   input: { width: 84, textAlign: 'right', borderWidth: 1, borderColor: colors.line, borderRadius: 8, paddingHorizontal: 13, paddingVertical: 9, fontFamily: fonts.regular, fontSize: 16, color: colors.ink1, backgroundColor: colors.bg, fontVariant: ['tabular-nums'] },
   toggleCard: { marginTop: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, borderRadius: 18, paddingHorizontal: 18, paddingVertical: 16 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   toggleLabel: { fontFamily: fonts.regular, fontSize: 15, color: colors.ink1 },
-  help: { fontFamily: fonts.regular, fontSize: 11.5, lineHeight: 17, color: colors.ink3, marginTop: 8, marginHorizontal: 2 },
+  help: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 17, color: colors.ink3, marginTop: 8, marginHorizontal: 2 },
 });

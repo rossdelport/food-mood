@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   step: { flexDirection: 'row', gap: 18, alignItems: 'flex-start' },
   well: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.chip, alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: -6, left: -6, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.accentText },
+  badgeText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accentText },
   title: { fontFamily: fonts.medium, fontSize: 18, color: colors.ink1 },
   desc: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.ink3, marginTop: 3 },
 });

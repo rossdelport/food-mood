@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   },
   time: {
     fontFamily: fonts.regular,
-    fontSize: 11.5,
+    fontSize: 13,
     color: colors.ink3,
     marginTop: 3,
   },

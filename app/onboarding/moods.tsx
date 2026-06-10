@@ -70,8 +70,8 @@ const styles = StyleSheet.create({
   list: { flex: 1, justifyContent: 'center', paddingHorizontal: 30, gap: 16, transform: [{ translateY: -20 }] },
   row: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   label: { fontFamily: fonts.regular, fontSize: 18, color: colors.ink1 },
-  sublabel: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.ink3, marginTop: 1 },
+  sublabel: { fontFamily: fonts.regular, fontSize: 13.5, color: colors.ink3, marginTop: 1 },
   addWrap: { alignItems: 'center', marginTop: 6 },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 8, paddingHorizontal: 14 },
-  addText: { fontFamily: fonts.medium, fontSize: 13.5, color: colors.ink2 },
+  addText: { fontFamily: fonts.medium, fontSize: 14.5, color: colors.ink2 },
 });

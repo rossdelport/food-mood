@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   dot: { height: 6, borderRadius: 999 },
   dotActive: { width: 18, backgroundColor: colors.ink1 },
   dotInactive: { width: 6, backgroundColor: colors.line },
-  skip: { fontFamily: fonts.medium, fontSize: 13.5, color: colors.ink3 },
+  skip: { fontFamily: fonts.medium, fontSize: 14.5, color: colors.ink3 },
   body: { flex: 1 },
   footer: { paddingHorizontal: 28 },
 });

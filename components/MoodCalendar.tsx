@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   tile: { width: '100%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   tileEmpty: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line },
   tileToday: { borderWidth: 2, borderColor: colors.ink1 },
-  dayNum: { fontFamily: fonts.regular, fontSize: 12 },
+  dayNum: { fontFamily: fonts.regular, fontSize: 13 },
   dayNumToday: { fontFamily: fonts.semibold },
   pendingMark: { position: 'absolute', bottom: 4, width: 4, height: 4, borderRadius: 2, backgroundColor: colors.ink3 },
 });

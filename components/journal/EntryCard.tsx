@@ -52,10 +52,10 @@ const styles = StyleSheet.create({
   },
   dot: { width: 22, height: 22, borderRadius: 11, marginTop: 2, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' },
   dateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 },
-  weekday: { fontFamily: fonts.medium, fontSize: 13.5, letterSpacing: -0.2, color: colors.ink1 },
+  weekday: { fontFamily: fonts.medium, fontSize: 14.5, letterSpacing: -0.2, color: colors.ink1 },
   date: { fontFamily: fonts.medium, fontSize: 14, letterSpacing: -0.2, color: colors.ink1 },
   time: { fontFamily: fonts.regular, fontSize: 11, color: colors.ink3 },
-  preview: { fontFamily: fonts.light, fontSize: 13, lineHeight: 19.5, color: colors.ink2, marginTop: 5 },
+  preview: { fontFamily: fonts.light, fontSize: 14, lineHeight: 19.5, color: colors.ink2, marginTop: 5 },
   linkPill: { alignSelf: 'flex-start', marginTop: 8, backgroundColor: colors.chip, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 9 },
   linkText: { fontFamily: fonts.regular, fontSize: 11, color: colors.ink3 },
 });

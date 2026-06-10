@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   tab: { flex: 1, alignItems: 'center', gap: 6, paddingVertical: 5 },
-  label: { fontFamily: fonts.regular, fontSize: 12, letterSpacing: 0.2 },
+  label: { fontFamily: fonts.regular, fontSize: 13, letterSpacing: 0.2 },
   labelActive: { fontFamily: fonts.semibold },
   centerWrap: { flex: 1, alignItems: 'center', gap: 7 },
   capture: {
@@ -113,5 +113,5 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 8,
   },
-  captureLabel: { fontFamily: fonts.medium, fontSize: 12, letterSpacing: 0.2, color: colors.ink2 },
+  captureLabel: { fontFamily: fonts.medium, fontSize: 13, letterSpacing: 0.2, color: colors.ink2 },
 });

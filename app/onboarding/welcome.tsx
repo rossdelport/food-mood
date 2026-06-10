@@ -40,7 +40,7 @@ export default function Welcome() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36 },
-  brand: { fontFamily: fonts.medium, fontSize: 12, letterSpacing: 3, color: colors.ink3, marginTop: 12 },
+  brand: { fontFamily: fonts.medium, fontSize: 13, letterSpacing: 3, color: colors.ink3, marginTop: 12 },
   h1: { fontFamily: fonts.serif, fontSize: 38, lineHeight: 44, letterSpacing: -0.5, color: colors.ink1, textAlign: 'center', marginTop: 28 },
   body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 23, color: colors.ink3, textAlign: 'center', marginTop: 18, maxWidth: 280 },
 });

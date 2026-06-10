@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   wrap: { marginTop: 20 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 9 },
   eyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3 },
-  journey: { fontFamily: fonts.regular, fontSize: 11.5, color: colors.ink3 },
+  journey: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink3 },
   barWrap: {
     position: 'relative',
     height: 60,

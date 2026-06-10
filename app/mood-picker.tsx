@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   heading: { paddingHorizontal: 28, paddingTop: 22, paddingBottom: 8 },
   eyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3 },
   title: { fontFamily: fonts.light, fontSize: 28, letterSpacing: -0.4, color: colors.ink1, marginTop: 8 },
-  sub: { fontFamily: fonts.regular, fontSize: 13.5, color: colors.ink3, marginTop: 6 },
+  sub: { fontFamily: fonts.regular, fontSize: 14.5, color: colors.ink3, marginTop: 6 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   moodLabel: { fontFamily: fonts.regular, fontSize: 19, letterSpacing: -0.2, color: colors.ink1 },
-  moodSub: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.ink3, marginTop: 2 },
+  moodSub: { fontFamily: fonts.regular, fontSize: 13.5, color: colors.ink3, marginTop: 2 },
   continueWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 24 },
   continueBtn: {
     backgroundColor: colors.accent,

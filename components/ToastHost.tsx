@@ -76,5 +76,5 @@ const styles = StyleSheet.create({
     shadowRadius: 22,
     elevation: 8,
   },
-  text: { fontFamily: fonts.medium, fontSize: 13, color: colors.bg, letterSpacing: 0.2 },
+  text: { fontFamily: fonts.medium, fontSize: 14, color: colors.bg, letterSpacing: 0.2 },
 });
