@@ -115,15 +115,21 @@ export async function listDayStats(fromISO: string, toISO: string): Promise<DayS
     .lte('captured_at', toISO);
   if (error) return { moodByDay: {}, mealDays: {} };
   const counts: Record<string, Record<string, number>> = {};
+  const lastAt: Record<string, Record<string, number>> = {};
   const mealDays: Record<string, true> = {};
   for (const r of data ?? []) {
-    const key = format(new Date(r.captured_at), 'yyyy-MM-dd');
+    const ts = new Date(r.captured_at).getTime();
+    const key = format(ts, 'yyyy-MM-dd');
     mealDays[key] = true;
-    if (r.mood) (counts[key] ??= {})[r.mood] = (counts[key][r.mood] || 0) + 1;
+    if (r.mood) {
+      (counts[key] ??= {})[r.mood] = (counts[key][r.mood] || 0) + 1;
+      (lastAt[key] ??= {})[r.mood] = Math.max(lastAt[key][r.mood] ?? 0, ts);
+    }
   }
   const moodByDay: Record<string, string> = {};
   for (const [key, c] of Object.entries(counts)) {
-    moodByDay[key] = Object.keys(c).sort((a, b) => c[b] - c[a])[0];
+    // most frequent; ties break toward the most recently logged mood
+    moodByDay[key] = Object.keys(c).sort((a, b) => c[b] - c[a] || lastAt[key][b] - lastAt[key][a])[0];
   }
   return { moodByDay, mealDays };
 }
