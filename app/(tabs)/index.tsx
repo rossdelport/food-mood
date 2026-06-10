@@ -8,6 +8,7 @@ import MealCard from '../../components/MealCard';
 import WeekSpectrum from '../../components/WeekSpectrum';
 import MoodCalendar from '../../components/MoodCalendar';
 import OrbRefresh from '../../components/OrbRefresh';
+import EmptyOrbs from '../../components/EmptyOrbs';
 import { PlusIcon } from '../../components/NavIcons';
 import { colors, fonts, radius as radii, buttonShadow } from '../../constants/theme';
 import { dayTotals, dominantMood, kcalOf } from '../../constants/data';
@@ -100,7 +101,10 @@ export default function HomeScreen() {
             mealsLoading ? (
               <View style={styles.feedLoading}><ActivityIndicator color={colors.ink3} /></View>
             ) : (
-              <Text style={styles.empty}>No meals logged yet today. Snap your first one to start your mood journey.</Text>
+              <View style={styles.emptyWrap}>
+                <EmptyOrbs />
+                <Text style={styles.empty}>No meals logged yet today. Snap your first one to start your mood journey.</Text>
+              </View>
             )
           ) : (
             <View style={{ gap: 10 }}>
@@ -143,6 +147,7 @@ const styles = StyleSheet.create({
   logBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: colors.accent, borderRadius: radii.button, paddingVertical: 16, ...buttonShadow },
   logText: { fontFamily: fonts.medium, fontSize: 15.5, letterSpacing: 0.2, color: colors.accentText },
   feed: { paddingHorizontal: 16, paddingTop: 14 },
-  empty: { fontFamily: fonts.serifItalic, fontSize: 14, lineHeight: 21, color: colors.ink3, textAlign: 'center', paddingVertical: 24, paddingHorizontal: 24 },
+  emptyWrap: { paddingVertical: 36, alignItems: 'center' },
+  empty: { fontFamily: fonts.serifItalic, fontSize: 14, lineHeight: 21, color: colors.ink3, textAlign: 'center', paddingHorizontal: 24 },
   feedLoading: { paddingVertical: 40, alignItems: 'center' },
 });

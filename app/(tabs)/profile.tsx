@@ -16,6 +16,7 @@ import { deleteAccount } from '../../services/account';
 import { refreshMeals } from '../../store/meals';
 import { refreshMoodDays } from '../../store/moodDays';
 import { showToast, type ToastIcon } from '../../store/toast';
+import { hSelect } from '../../services/haptics';
 import { colors, fonts, radius as radii, macroColors } from '../../constants/theme';
 import type { Targets } from '../../store/profile';
 
@@ -156,6 +157,11 @@ export default function ProfileScreen() {
             <Toggle on={profile.showCalories} onChange={(v) => { updateProfile({ showCalories: v }); flash(v ? 'Calories on' : 'Calories off'); }} />
           </View>
           <Text style={styles.help}>Track calories alongside your macros. Off by default, since this app is about how food makes you feel, not just numbers.</Text>
+          <View style={[styles.fieldRow, styles.fieldDivider]}>
+            <Text style={[styles.fieldLabel, { flex: 1 }]}>Haptics</Text>
+            <Toggle on={profile.haptics} onChange={(v) => { updateProfile({ haptics: v }); if (v) hSelect(); flash(v ? 'Haptics on' : 'Haptics off'); }} />
+          </View>
+          <Text style={styles.help}>Gentle taps when you pick a mood, log a meal, and more.</Text>
         </SectionCard>
 
         {/* reminder */}

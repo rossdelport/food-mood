@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import EntryCard from '../../components/journal/EntryCard';
 import OrbRefresh from '../../components/OrbRefresh';
+import EmptyOrbs from '../../components/EmptyOrbs';
 import { SearchIcon, PlusIcon } from '../../components/NavIcons';
 import { ChevronLeftIcon } from '../../components/NavIcons';
 import { useJournalEntries } from '../../store/journal';
@@ -42,7 +43,10 @@ export default function JournalScreen() {
 
         <View style={styles.list}>
           {sorted.length === 0 ? (
-            <Text style={styles.empty}>A quiet page. Tap "New Entry" to begin a reflection.</Text>
+            <View style={styles.emptyWrap}>
+              <EmptyOrbs />
+              <Text style={styles.empty}>A quiet page. Tap "New Entry" to begin a reflection.</Text>
+            </View>
           ) : (
             groups.map((g) => {
               const gm = g.moodId ? getMoodById(g.moodId) : null;
@@ -151,7 +155,8 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.light, fontSize: 32, letterSpacing: -0.5, color: colors.ink1 },
   subtitle: { fontFamily: fonts.regular, fontSize: 14.5, color: colors.ink2, marginTop: 6 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.chip, alignItems: 'center', justifyContent: 'center' },
-  empty: { fontFamily: fonts.serifItalic, fontSize: 14.5, color: colors.ink3, textAlign: 'center', paddingVertical: 60, paddingHorizontal: 30 },
+  emptyWrap: { paddingTop: 56, alignItems: 'center' },
+  empty: { fontFamily: fonts.serifItalic, fontSize: 14.5, color: colors.ink3, textAlign: 'center', paddingHorizontal: 30 },
   groupHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 16, paddingBottom: 10, paddingHorizontal: 6 },
   groupLabel: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.2, color: colors.ink3 },
   groupDot: { width: 9, height: 9, borderRadius: 4.5, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' },

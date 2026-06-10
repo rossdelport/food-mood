@@ -3,7 +3,11 @@
 // swallow errors (e.g. simulator / unsupported devices).
 import * as Haptics from 'expo-haptics';
 
-const run = (fn: () => Promise<unknown>) => { fn().catch(() => {}); };
+let enabled = true;
+/** Toggle all haptics (driven by the user's Profile setting). */
+export const setHapticsEnabled = (v: boolean) => { enabled = v; };
+
+const run = (fn: () => Promise<unknown>) => { if (enabled) fn().catch(() => {}); };
 
 /** Light tick for choosing/selecting (mood, swatch, toggle, library pick). */
 export const hSelect = () => run(() => Haptics.selectionAsync());

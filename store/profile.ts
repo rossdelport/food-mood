@@ -1,6 +1,7 @@
 // Profile / settings store, persisted to AsyncStorage.
 import { useSyncExternalStore } from 'react';
 import { loadJSON, saveJSON } from './persist';
+import { setHapticsEnabled } from '../services/haptics';
 
 const KEY = 'foodmood:profile';
 
@@ -13,6 +14,7 @@ export type Profile = {
   reason: string; // onboarding "What brought you here?"
   targets: Targets;
   showCalories: boolean;
+  haptics: boolean;
   notif: { on: boolean; mins: number };
 };
 
@@ -24,6 +26,7 @@ const DEFAULT_PROFILE: Profile = {
   reason: '',
   targets: { protein: 120, carbs: 200, fat: 65, calories: 2000 },
   showCalories: false,
+  haptics: true,
   notif: { on: true, mins: 60 },
 };
 
@@ -38,6 +41,7 @@ export async function hydrateProfile() {
   const saved = await loadJSON<Partial<Profile>>(KEY);
   if (saved) profile = { ...profile, ...saved, targets: { ...profile.targets, ...saved.targets }, notif: { ...profile.notif, ...saved.notif } };
   else saveJSON(KEY, profile);
+  setHapticsEnabled(profile.haptics);
   emit();
 }
 
@@ -53,6 +57,7 @@ export function resetProfile() {
 
 export function updateProfile(patch: Partial<Profile>) {
   profile = { ...profile, ...patch };
+  if (patch.haptics !== undefined) setHapticsEnabled(profile.haptics);
   saveJSON(KEY, profile);
   emit();
 }
