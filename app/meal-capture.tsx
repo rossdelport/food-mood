@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import BackButton from '../components/BackButton';
 import MacroBar from '../components/MacroBar';
-import { EditIcon, FlipIcon } from '../components/NavIcons';
+import { EditIcon, FlipIcon, CloseIcon } from '../components/NavIcons';
 import { detectMacros } from '../services/vision';
 import { createMeal } from '../services/meals';
 import { scheduleMealReminder } from '../services/notifications';
@@ -17,6 +17,8 @@ import { showToast } from '../store/toast';
 import { macroGrams } from '../constants/data';
 import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../constants/theme';
 import type { DetectedMeal } from '../types';
+
+const REJECT_COLOR = '#9B5158';
 
 export default function MealCaptureScreen() {
   const insets = useSafeAreaInsets();
@@ -48,6 +50,10 @@ export default function MealCaptureScreen() {
 
   const patch = (p: Partial<DetectedMeal>) => setDetected((d) => (d ? { ...d, ...p } : d));
   const num = (t: string) => Math.max(0, parseInt(t.replace(/[^0-9]/g, ''), 10) || 0);
+
+  // The vision model returns this title when the photo isn't food or drink.
+  const rejected = detected != null && /not\s+(food|a meal)/i.test(detected.title);
+  const goToCamera = () => router.replace(date ? { pathname: '/camera', params: { date } } : { pathname: '/camera' });
 
   const confirm = async () => {
     if (!detected || !img || saving) return;
@@ -86,7 +92,7 @@ export default function MealCaptureScreen() {
     <View style={styles.screen}>
       <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
         <BackButton onPress={() => router.back()} />
-        {!analyzing && detected && (
+        {!analyzing && detected && !rejected && (
           <Pressable style={styles.editBtn} onPress={() => setEditing((e) => !e)}>
             <EditIcon color={colors.ink2} size={16} />
             <Text style={styles.editText}>{editing ? 'Done' : 'Edit'}</Text>
@@ -109,6 +115,14 @@ export default function MealCaptureScreen() {
               <FlipIcon color={colors.ink2} size={16} />
               <Text style={styles.retryText}>Try again</Text>
             </Pressable>
+          </View>
+        ) : rejected ? (
+          <View style={styles.rejected}>
+            <View style={styles.rejectedIcon}>
+              <CloseIcon color={REJECT_COLOR} size={22} />
+            </View>
+            <Text style={styles.rejectedTitle}>Can't log this</Text>
+            <Text style={styles.rejectedBody}>We can only log food or drink. Please re-try with a meal or a beverage.</Text>
           </View>
         ) : detected ? (
           <>
@@ -153,9 +167,16 @@ export default function MealCaptureScreen() {
 
       {detected && !analyzing && (
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-          <Pressable style={[styles.logBtn, saving && { opacity: 0.6 }]} onPress={confirm} disabled={saving}>
-            {saving ? <ActivityIndicator color={colors.accentText} /> : <Text style={styles.logText}>Log meal</Text>}
-          </Pressable>
+          {rejected ? (
+            <Pressable style={styles.logBtn} onPress={goToCamera}>
+              <FlipIcon color={colors.accentText} size={17} />
+              <Text style={styles.logText}>Re-try</Text>
+            </Pressable>
+          ) : (
+            <Pressable style={[styles.logBtn, saving && { opacity: 0.6 }]} onPress={confirm} disabled={saving}>
+              {saving ? <ActivityIndicator color={colors.accentText} /> : <Text style={styles.logText}>Log meal</Text>}
+            </Pressable>
+          )}
         </View>
       )}
     </View>
@@ -206,6 +227,10 @@ const styles = StyleSheet.create({
   reanalyzeText: { fontFamily: fonts.medium, fontSize: 14, color: colors.ink3 },
   reminderNote: { fontFamily: fonts.serifItalic, fontSize: 14, lineHeight: 21, color: colors.ink3, textAlign: 'center', marginTop: 20, paddingHorizontal: 10 },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 12, backgroundColor: colors.bg },
-  logBtn: { backgroundColor: colors.accent, borderRadius: radii.button, paddingVertical: 17, alignItems: 'center', ...buttonShadow },
+  logBtn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, backgroundColor: colors.accent, borderRadius: radii.button, paddingVertical: 17, ...buttonShadow },
   logText: { fontFamily: fonts.medium, fontSize: 15.5, letterSpacing: 0.2, color: colors.accentText },
+  rejected: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 16, gap: 11 },
+  rejectedIcon: { width: 58, height: 58, borderRadius: 29, backgroundColor: 'rgba(155,81,88,0.12)', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  rejectedTitle: { fontFamily: fonts.light, fontSize: 23, letterSpacing: -0.3, color: colors.ink1 },
+  rejectedBody: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 22, color: colors.ink3, textAlign: 'center', maxWidth: 300 },
 });
