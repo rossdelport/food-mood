@@ -69,7 +69,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 34, paddingBottom: insets.bottom + 120 }}>
+      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 34, paddingBottom: insets.bottom + 76 }}>
         <Text style={styles.headerTitle}>Profile</Text>
         <Text style={styles.intro}>Your photo, name, daily goals, and how Food Mood checks in with you.</Text>
 
@@ -188,16 +188,6 @@ export default function ProfileScreen() {
           <Text style={styles.help}>You'll get one notification per meal to reflect on your mood.</Text>
         </SectionCard>
 
-        {/* account */}
-        <SectionCard title="Account">
-          <Pressable style={styles.outlineBtn} onPress={onLogout}>
-            <Text style={styles.outlineBtnText}>Log Out</Text>
-          </Pressable>
-          <Pressable style={[styles.outlineBtn, styles.dangerBtn]} onPress={() => setConfirmDel(true)}>
-            <Text style={[styles.outlineBtnText, { color: DELETE_RED }]}>Delete Account</Text>
-          </Pressable>
-        </SectionCard>
-
         {/* about */}
         <SectionCard title="About">
           {['Privacy Policy', 'Terms of Service', 'Contact & Support'].map((l, i) => (
@@ -215,6 +205,16 @@ export default function ProfileScreen() {
             <Toggle on={!profile.notif.on} onChange={(v) => { updateNotif({ on: !v }); if (v) Notifications.cancelAllScheduledNotificationsAsync().catch(() => {}); flash(v ? 'Notifications off' : 'Notifications on', 'bell'); }} />
           </View>
           <Text style={[styles.help, { marginTop: 14 }]}>Food Mood · Version 1.0.0</Text>
+        </SectionCard>
+
+        {/* account */}
+        <SectionCard title="Account">
+          <Pressable style={styles.outlineBtn} onPress={onLogout}>
+            <Text style={styles.outlineBtnText}>Log Out</Text>
+          </Pressable>
+          <Pressable style={[styles.outlineBtn, styles.dangerBtn]} onPress={() => setConfirmDel(true)}>
+            <Text style={[styles.outlineBtnText, { color: DELETE_RED }]}>Delete Account</Text>
+          </Pressable>
         </SectionCard>
       </OrbRefresh>
 

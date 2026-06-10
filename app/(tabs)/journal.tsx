@@ -45,7 +45,8 @@ export default function JournalScreen() {
           {sorted.length === 0 ? (
             <View style={styles.emptyWrap}>
               <EmptyOrbs />
-              <Text style={styles.empty}>A quiet page. Tap "New Entry" to begin a reflection.</Text>
+              <Text style={styles.emptyTitle}>Your journal is empty</Text>
+              <Text style={styles.empty}>Tap “New Entry” to reflect on how a meal or a moment left you feeling.</Text>
             </View>
           ) : (
             groups.map((g) => {
@@ -155,8 +156,9 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.light, fontSize: 32, letterSpacing: -0.5, color: colors.ink1 },
   subtitle: { fontFamily: fonts.regular, fontSize: 14.5, color: colors.ink2, marginTop: 6 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.chip, alignItems: 'center', justifyContent: 'center' },
-  emptyWrap: { paddingTop: 56, alignItems: 'center' },
-  empty: { fontFamily: fonts.serifItalic, fontSize: 14.5, color: colors.ink3, textAlign: 'center', paddingHorizontal: 30 },
+  emptyWrap: { paddingTop: 60, alignItems: 'center' },
+  emptyTitle: { fontFamily: fonts.light, fontSize: 20, letterSpacing: -0.3, color: colors.ink1, marginBottom: 8 },
+  empty: { fontFamily: fonts.serifItalic, fontSize: 14.5, lineHeight: 21, color: colors.ink3, textAlign: 'center', paddingHorizontal: 36 },
   groupHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 16, paddingBottom: 10, paddingHorizontal: 6 },
   groupLabel: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.2, color: colors.ink3 },
   groupDot: { width: 9, height: 9, borderRadius: 4.5, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' },

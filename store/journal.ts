@@ -1,13 +1,12 @@
 // Lightweight in-memory journal store (useSyncExternalStore).
 // Becomes the basis for AsyncStorage-backed persistence in a later milestone.
 import { useSyncExternalStore } from 'react';
-import { makeSeedJournal } from '../constants/journalData';
 import { loadJSON, saveJSON } from './persist';
 import type { JournalEntry } from '../types';
 
 const KEY = 'foodmood:journal';
 
-let entries: JournalEntry[] = makeSeedJournal();
+let entries: JournalEntry[] = [];
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -19,11 +18,12 @@ function subscribe(l: () => void) {
   return () => listeners.delete(l);
 }
 
-// Load saved entries; on first run, persist the seed so future edits stick.
+// Load saved entries. Users start with a blank journal (legacy seed entries
+// are stripped so anyone who saw the demo entries gets a clean start).
 export async function hydrateJournal() {
   const saved = await loadJSON<JournalEntry[]>(KEY);
-  if (saved) entries = saved;
-  else saveJSON(KEY, entries);
+  entries = (saved ?? []).filter((e) => !e.id.startsWith('j-seed'));
+  saveJSON(KEY, entries);
   emit();
 }
 
