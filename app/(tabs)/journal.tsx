@@ -29,7 +29,7 @@ export default function JournalScreen() {
 
   return (
     <View style={styles.screen}>
-      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: 110 }}>
+      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingTop: insets.top + 34, paddingBottom: 110 }}>
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Journal</Text>
