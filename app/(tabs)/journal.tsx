@@ -29,37 +29,39 @@ export default function JournalScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + 14 }]}>
-        <View>
-          <Text style={styles.title}>Journal</Text>
-          <Text style={styles.subtitle}>Reflect on your patterns</Text>
+      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: 110 }}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Journal</Text>
+            <Text style={styles.subtitle}>Reflect on your patterns</Text>
+          </View>
+          <Pressable style={styles.iconBtn} onPress={() => setSearching(true)}>
+            <SearchIcon color={colors.ink2} />
+          </Pressable>
         </View>
-        <Pressable style={styles.iconBtn} onPress={() => setSearching(true)}>
-          <SearchIcon color={colors.ink2} />
-        </Pressable>
-      </View>
 
-      <OrbRefresh onRefresh={() => {}} indicatorTop={6} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 110 }}>
-        {sorted.length === 0 ? (
-          <Text style={styles.empty}>A quiet page. Tap "New Entry" to begin a reflection.</Text>
-        ) : (
-          groups.map((g) => {
-            const gm = g.moodId ? getMoodById(g.moodId) : null;
-            return (
-              <View key={g.label}>
-                <View style={styles.groupHeader}>
-                  <Text style={styles.groupLabel}>{g.label.toUpperCase()}</Text>
-                  {gm && <View style={[styles.groupDot, { backgroundColor: gm.color }]} />}
+        <View style={styles.list}>
+          {sorted.length === 0 ? (
+            <Text style={styles.empty}>A quiet page. Tap "New Entry" to begin a reflection.</Text>
+          ) : (
+            groups.map((g) => {
+              const gm = g.moodId ? getMoodById(g.moodId) : null;
+              return (
+                <View key={g.label}>
+                  <View style={styles.groupHeader}>
+                    <Text style={styles.groupLabel}>{g.label.toUpperCase()}</Text>
+                    {gm && <View style={[styles.groupDot, { backgroundColor: gm.color }]} />}
+                  </View>
+                  <View style={{ gap: 9 }}>
+                    {g.items.map((e) => (
+                      <EntryCard key={e.id} entry={e} weekdayOnly onPress={() => router.push({ pathname: '/journal-read', params: { id: e.id } })} />
+                    ))}
+                  </View>
                 </View>
-                <View style={{ gap: 9 }}>
-                  {g.items.map((e) => (
-                    <EntryCard key={e.id} entry={e} weekdayOnly onPress={() => router.push({ pathname: '/journal-read', params: { id: e.id } })} />
-                  ))}
-                </View>
-              </View>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </View>
       </OrbRefresh>
 
       <View style={[styles.newWrap, { bottom: 46 }]}>
@@ -145,6 +147,7 @@ function JournalSearch({ onBack, entries }: { onBack: () => void; entries: Retur
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 12 },
+  list: { paddingHorizontal: 16, paddingTop: 12 },
   title: { fontFamily: fonts.light, fontSize: 32, letterSpacing: -0.5, color: colors.ink1 },
   subtitle: { fontFamily: fonts.regular, fontSize: 14, color: colors.ink3, marginTop: 6 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.chip, alignItems: 'center', justifyContent: 'center' },
