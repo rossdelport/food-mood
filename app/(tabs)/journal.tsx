@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, TextInput, StyleSheet } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import EntryCard from '../../components/journal/EntryCard';
+import OrbRefresh from '../../components/OrbRefresh';
 import { SearchIcon, PlusIcon } from '../../components/NavIcons';
 import { ChevronLeftIcon } from '../../components/NavIcons';
 import { useJournalEntries } from '../../store/journal';
@@ -38,7 +39,7 @@ export default function JournalScreen() {
         </Pressable>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 110 }}>
+      <OrbRefresh onRefresh={() => {}} indicatorTop={6} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 110 }}>
         {sorted.length === 0 ? (
           <Text style={styles.empty}>A quiet page. Tap "New Entry" to begin a reflection.</Text>
         ) : (
@@ -59,7 +60,7 @@ export default function JournalScreen() {
             );
           })
         )}
-      </ScrollView>
+      </OrbRefresh>
 
       <View style={[styles.newWrap, { bottom: 38 }]}>
         <Pressable style={styles.newBtn} onPress={() => router.push('/journal-entry')}>

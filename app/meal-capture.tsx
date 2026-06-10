@@ -13,6 +13,7 @@ import { scheduleMealReminder } from '../services/notifications';
 import { refreshMeals } from '../store/meals';
 import { refreshMoodDays } from '../store/moodDays';
 import { useProfile } from '../store/profile';
+import { showToast } from '../store/toast';
 import { macroGrams } from '../constants/data';
 import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../constants/theme';
 import type { DetectedMeal } from '../types';
@@ -65,6 +66,7 @@ export default function MealCaptureScreen() {
       await Promise.all([refreshMeals(), refreshMoodDays()]);
       if (date) router.back(); // return to the day view that launched the log
       else router.dismissAll();
+      showToast('Meal logged', 'check');
       if (isToday && profile.notif.on && !reminderId) {
         Alert.alert('Reminder not set', 'Allow notifications to get a gentle mood check-in after your meals.');
       }

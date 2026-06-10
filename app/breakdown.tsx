@@ -8,21 +8,23 @@ import MoodDot from '../components/MoodDot';
 import MacroBar from '../components/MacroBar';
 import { EditIcon, TrashIcon } from '../components/NavIcons';
 import { macroGrams, kcalOf } from '../constants/data';
-import { getMealById, updateMeal, deleteMeal } from '../services/meals';
+import { getMealById, updateMeal, deleteMeal, setMealMood } from '../services/meals';
 import { refreshMeals } from '../store/meals';
 import { refreshMoodDays } from '../store/moodDays';
 import { useProfile } from '../store/profile';
-import { getMoodById } from '../store/moods';
+import { getMoodById, useMoods } from '../store/moods';
+import { showToast } from '../store/toast';
 import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../constants/theme';
 import type { Meal } from '../types';
 
 const DELETE_RED = '#9B5158';
-type Draft = { title: string; protein: number; carbs: number; fat: number; calories: number };
+type Draft = { title: string; protein: number; carbs: number; fat: number; calories: number; mood: string | null };
 
 export default function BreakdownScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const showCal = useProfile().showCalories;
+  const moods = useMoods();
   const { mealId } = useLocalSearchParams<{ mealId?: string }>();
 
   const [meal, setMeal] = useState<Meal | null>(null);
@@ -46,7 +48,7 @@ export default function BreakdownScreen() {
 
   const startEdit = () => {
     if (!meal) return;
-    setDraft({ title: meal.title, ...meal.macros, calories: meal.calories ?? kcalOf(meal.macros) });
+    setDraft({ title: meal.title, ...meal.macros, calories: meal.calories ?? kcalOf(meal.macros), mood: meal.mood });
     setEditing(true);
   };
   const num = (t: string) => Math.max(0, parseInt(t.replace(/[^0-9]/g, ''), 10) || 0);
@@ -56,10 +58,12 @@ export default function BreakdownScreen() {
     if (!meal || !draft || saving) return;
     setSaving(true);
     try {
-      await updateMeal(meal.id, draft);
-      setMeal({ ...meal, title: draft.title, macros: { protein: draft.protein, carbs: draft.carbs, fat: draft.fat }, calories: draft.calories });
-      await refreshMeals();
+      await updateMeal(meal.id, { title: draft.title, protein: draft.protein, carbs: draft.carbs, fat: draft.fat, calories: draft.calories });
+      if (draft.mood && draft.mood !== meal.mood) await setMealMood(meal.id, draft.mood);
+      setMeal({ ...meal, title: draft.title, macros: { protein: draft.protein, carbs: draft.carbs, fat: draft.fat }, calories: draft.calories, mood: draft.mood ?? meal.mood });
+      await Promise.all([refreshMeals(), refreshMoodDays()]);
       setEditing(false);
+      showToast('Updated', 'edit');
     } catch {
       // keep editing
     } finally {
@@ -74,6 +78,7 @@ export default function BreakdownScreen() {
       await deleteMeal(meal.id);
       await refreshMeals();
       await refreshMoodDays();
+      showToast('Meal deleted', 'trash');
     } catch {
       // ignore
     }
@@ -122,16 +127,33 @@ export default function BreakdownScreen() {
               <Text style={styles.title}>{meal.title}</Text>
             )}
 
-            <View style={styles.moodRow}>
-              <View style={styles.moodOrbWrap}>
-                {mood ? <MoodDot moodId={mood.id} size={56} /> : <View style={styles.noMoodDot} />}
-                {meal.img ? <Image source={{ uri: meal.img }} style={styles.moodPhoto} contentFit="cover" transition={200} /> : null}
+            {editing && draft ? (
+              <View style={styles.moodEdit}>
+                <Text style={styles.editEyebrow}>HOW DID IT MAKE YOU FEEL?</Text>
+                <View style={styles.moodGrid}>
+                  {moods.map((m) => {
+                    const on = draft.mood === m.id;
+                    return (
+                      <Pressable key={m.id} style={[styles.moodItem, { opacity: draft.mood && !on ? 0.5 : 1 }]} onPress={() => patch({ mood: m.id })}>
+                        <View style={[styles.moodOrb, { backgroundColor: m.color }, on && styles.moodOrbOn]} />
+                        <Text style={[styles.moodName, on && styles.moodNameOn]} numberOfLines={1}>{m.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </View>
-              <View>
-                <Text style={styles.moodCaption}>{mood ? 'Logged feeling' : 'No mood yet'}</Text>
-                <Text style={styles.moodLabel}>{mood ? mood.label : 'Pending check-in'}</Text>
+            ) : (
+              <View style={styles.moodRow}>
+                <View style={styles.moodOrbWrap}>
+                  {mood ? <MoodDot moodId={mood.id} size={56} /> : <View style={styles.noMoodDot} />}
+                  {meal.img ? <Image source={{ uri: meal.img }} style={styles.moodPhoto} contentFit="cover" transition={200} /> : null}
+                </View>
+                <View>
+                  <Text style={styles.moodCaption}>{mood ? 'Logged feeling' : 'No mood yet'}</Text>
+                  <Text style={styles.moodLabel}>{mood ? mood.label : 'Pending check-in'}</Text>
+                </View>
               </View>
-            </View>
+            )}
 
             <View style={{ marginTop: 30 }}>
               <MacroBar macros={macros} height={20} radius={radii.base} colors={macroColors} animate={!editing} />
@@ -214,6 +236,14 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2.4, color: colors.ink3 },
   title: { fontFamily: fonts.light, fontSize: 27, letterSpacing: -0.4, color: colors.ink1, marginTop: 8 },
   titleInput: { fontFamily: fonts.regular, fontSize: 24, color: colors.ink1, marginTop: 8, borderBottomWidth: 1, borderBottomColor: colors.line, paddingVertical: 4 },
+  moodEdit: { marginTop: 24 },
+  editEyebrow: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 1.8, color: colors.ink3, marginBottom: 12 },
+  moodGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
+  moodItem: { width: '20%', alignItems: 'center', gap: 7 },
+  moodOrb: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: 'transparent' },
+  moodOrbOn: { borderColor: colors.ink1, transform: [{ scale: 1.08 }] },
+  moodName: { fontFamily: fonts.regular, fontSize: 9.5, textAlign: 'center', color: colors.ink3, letterSpacing: 0.1 },
+  moodNameOn: { fontFamily: fonts.semibold, color: colors.ink1 },
   moodRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 22 },
   moodOrbWrap: { flexDirection: 'row', alignItems: 'center' },
   noMoodDot: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.chip, borderWidth: 1, borderColor: colors.line, borderStyle: 'dashed' },

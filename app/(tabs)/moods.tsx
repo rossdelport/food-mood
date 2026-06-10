@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Modal, Keyboard } from 'react-native';
+import { View, Text, Pressable, TextInput, StyleSheet, Modal, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MoodDot from '../../components/MoodDot';
+import OrbRefresh from '../../components/OrbRefresh';
 import { EditIcon, PlusIcon, CameraIcon } from '../../components/NavIcons';
 import { useMoods, addMood, updateMood, removeMood, MOOD_SWATCHES } from '../../store/moods';
 import { colors, fonts, radius as radii } from '../../constants/theme';
@@ -28,7 +29,7 @@ export default function MoodsScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 120 }}>
+      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 120 }}>
         <Text style={styles.eyebrow}>MANAGE</Text>
         <Text style={styles.title}>Moods</Text>
         <Text style={styles.intro}>
@@ -72,7 +73,7 @@ export default function MoodsScreen() {
           <PlusIcon color={colors.ink2} />
           <Text style={styles.addText}>Add a mood</Text>
         </Pressable>
-      </ScrollView>
+      </OrbRefresh>
 
       {/* editor sheet */}
       <Modal visible={!!editing} transparent animationType="fade" onRequestClose={() => setEditing(null)}>

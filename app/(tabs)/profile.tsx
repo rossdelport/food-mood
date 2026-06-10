@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Modal } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Pressable, TextInput, StyleSheet, Modal } from 'react-native';
 import { Image } from 'expo-image';
+import OrbRefresh from '../../components/OrbRefresh';
 import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +15,7 @@ import { signOut } from '../../store/auth';
 import { deleteAccount } from '../../services/account';
 import { refreshMeals } from '../../store/meals';
 import { refreshMoodDays } from '../../store/moodDays';
+import { showToast, type ToastIcon } from '../../store/toast';
 import { colors, fonts, radius as radii, macroColors } from '../../constants/theme';
 import type { Targets } from '../../store/profile';
 
@@ -26,14 +28,8 @@ export default function ProfileScreen() {
   const [editName, setEditName] = useState(false);
   const [editTag, setEditTag] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const flash = (m: string) => {
-    setToast(m);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 1900);
-  };
+  const flash = (m: string, icon: ToastIcon = 'check') => showToast(m, icon);
 
   const onDeleteAccount = async () => {
     setConfirmDel(false);
@@ -66,7 +62,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 120 }}>
+      <OrbRefresh onRefresh={() => {}} contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 120 }}>
         {/* user card */}
         <View style={styles.userCard}>
           <Pressable style={styles.avatarWrap} onPress={pickAvatar}>
@@ -164,7 +160,7 @@ export default function ProfileScreen() {
             step={15}
             value={profile.notif.mins}
             onValueChange={(v) => updateNotif({ mins: v })}
-            onSlidingComplete={(v) => flash(`Reminder set to ${v} minutes`)}
+            onSlidingComplete={(v) => flash(`Reminder set to ${v} minutes`, 'bell')}
             minimumTrackTintColor={colors.accent}
             maximumTrackTintColor={colors.line}
             thumbTintColor={colors.accent}
@@ -189,7 +185,7 @@ export default function ProfileScreen() {
         {/* about */}
         <SectionCard title="About">
           {['Privacy Policy', 'Terms of Service', 'Contact & Support'].map((l, i) => (
-            <Pressable key={l} style={[styles.aboutRow, i > 0 && styles.fieldDivider]} onPress={() => flash('Opens in your browser')}>
+            <Pressable key={l} style={[styles.aboutRow, i > 0 && styles.fieldDivider]} onPress={() => flash('Opens in your browser', 'info')}>
               <Text style={styles.fieldLabel}>{l}</Text>
               <ChevronRightIcon color={colors.ink3} />
             </Pressable>
@@ -200,11 +196,11 @@ export default function ProfileScreen() {
           </Pressable>
           <View style={[styles.fieldRow, styles.fieldDivider]}>
             <Text style={[styles.fieldLabel, { flex: 1 }]}>Turn off notifications</Text>
-            <Toggle on={!profile.notif.on} onChange={(v) => { updateNotif({ on: !v }); if (v) Notifications.cancelAllScheduledNotificationsAsync().catch(() => {}); flash(v ? 'Notifications off' : 'Notifications on'); }} />
+            <Toggle on={!profile.notif.on} onChange={(v) => { updateNotif({ on: !v }); if (v) Notifications.cancelAllScheduledNotificationsAsync().catch(() => {}); flash(v ? 'Notifications off' : 'Notifications on', 'bell'); }} />
           </View>
           <Text style={[styles.help, { marginTop: 14 }]}>Food Mood · Version 1.0.0</Text>
         </SectionCard>
-      </ScrollView>
+      </OrbRefresh>
 
       {/* delete confirmation */}
       <Modal visible={confirmDel} transparent animationType="fade" onRequestClose={() => setConfirmDel(false)}>
@@ -223,12 +219,6 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-
-      {toast && (
-        <View style={[styles.toast, { bottom: insets.bottom + 96 }]} pointerEvents="none">
-          <Text style={styles.toastText}>{toast}</Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -283,6 +273,4 @@ const styles = StyleSheet.create({
   cancelText: { fontFamily: fonts.medium, fontSize: 14.5, color: colors.ink2 },
   deleteBtn: { backgroundColor: DELETE_RED, borderRadius: 10, paddingVertical: 11, paddingHorizontal: 22 },
   deleteText: { fontFamily: fonts.medium, fontSize: 14.5, color: '#fff' },
-  toast: { position: 'absolute', alignSelf: 'center', backgroundColor: colors.ink1, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16 },
-  toastText: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.bg },
 });

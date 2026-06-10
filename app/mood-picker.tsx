@@ -9,6 +9,8 @@ import { hexA } from '../constants/data';
 import { useMoods } from '../store/moods';
 import { setMealMood } from '../services/meals';
 import { refreshMeals } from '../store/meals';
+import { refreshMoodDays } from '../store/moodDays';
+import { showToast } from '../store/toast';
 import { colors, fonts, radius as radii, buttonShadow } from '../constants/theme';
 
 // Post-meal reminder: log how a captured meal left you feeling.
@@ -26,8 +28,9 @@ export default function MoodPickerScreen() {
     try {
       if (mealId) {
         await setMealMood(mealId, sel);
-        await refreshMeals();
-        router.replace({ pathname: '/breakdown', params: { mode: 'meal', mealId } });
+        await Promise.all([refreshMeals(), refreshMoodDays()]);
+        showToast('Mood logged', 'check');
+        router.replace({ pathname: '/breakdown', params: { mealId } });
         return;
       }
       router.back();

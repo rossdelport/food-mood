@@ -16,6 +16,7 @@ import {
   Newsreader_500Medium_Italic,
 } from '@expo-google-fonts/newsreader';
 import { colors } from '../constants/theme';
+import ToastHost from '../components/ToastHost';
 import { useAuth, hydrateAuth } from '../store/auth';
 import { hydrateJournal } from '../store/journal';
 import { hydrateMoods } from '../store/moods';
@@ -103,6 +104,7 @@ export default function RootLayout() {
         <Stack.Screen name="journal-entry" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="journal-read" />
       </Stack>
+      <ToastHost />
     </SafeAreaProvider>
   );
 }
