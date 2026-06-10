@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Pressable, TextInput, StyleSheet, Modal, Keyboard } from 'react-native';
+import { View, Text, Pressable, TextInput, StyleSheet, Modal, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MoodDot from '../../components/MoodDot';
 import OrbRefresh from '../../components/OrbRefresh';
@@ -76,6 +76,7 @@ export default function MoodsScreen() {
 
       {/* editor sheet */}
       <Modal visible={!!editing} transparent animationType="fade" onRequestClose={() => setEditing(null)}>
+        <KeyboardAvoidingView style={styles.kav} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Pressable style={styles.backdrop} onPress={() => setEditing(null)}>
           <Pressable style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]} onPress={() => Keyboard.dismiss()}>
             {editing && (
@@ -138,6 +139,7 @@ export default function MoodsScreen() {
             )}
           </Pressable>
         </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -163,6 +165,7 @@ const styles = StyleSheet.create({
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12, borderWidth: 1, borderColor: colors.ink3, borderStyle: 'dashed', borderRadius: radii.card, paddingVertical: 13 },
   addText: { fontFamily: fonts.medium, fontSize: 14, color: colors.ink2 },
   // sheet
+  kav: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.34)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 22, paddingTop: 14 },
   grip: { width: 40, height: 5, borderRadius: 99, backgroundColor: colors.line, alignSelf: 'center', marginBottom: 16 },
