@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Modal } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CloseIcon } from '../components/NavIcons';
-import { subDays, format } from 'date-fns';
+import { startOfWeek, addDays, isSameDay, format } from 'date-fns';
 import { getEntry, saveEntry } from '../store/journal';
 import { useMoods } from '../store/moods';
 import { fmtDate, nowTime } from '../constants/journalData';
@@ -25,9 +25,11 @@ export default function JournalEntryScreen() {
   const [linking, setLinking] = useState(false);
 
   const canSave = draft.text.trim().length > 0 && !!draft.moodId;
+  // Current week, Monday → Sunday, with today shown as "Today".
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const linkOptions: JournalLink[] = Array.from({ length: 7 }, (_, i) => {
-    const d = subDays(new Date(), i);
-    return { label: `${i === 0 ? 'Today' : format(d, 'EEEE')} meals` };
+    const d = addDays(weekStart, i);
+    return { label: `${isSameDay(d, new Date()) ? 'Today' : format(d, 'EEEE')} meals` };
   });
   const status = canSave ? 'Saved' : draft.text.trim() && !draft.moodId ? 'Pick a feeling' : '';
 
