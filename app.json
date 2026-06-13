@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "food-mood",
+    "name": "Food Mood",
     "slug": "food-mood",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.rossdelport.foodmood",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Food Mood uses the camera to capture photos of your meals.",
         "NSPhotoLibraryUsageDescription": "Food Mood accesses your photos so you can log a meal from your library."
       }

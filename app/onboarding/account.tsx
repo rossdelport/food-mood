@@ -30,7 +30,9 @@ export default function Account() {
     if (res.session) {
       await pushProfileToRemote(); // save the onboarding profile to the new account
       hSuccess();
-      router.push('/onboarding/paywall');
+      // v1 ships free: paywall bypassed until real IAP is wired (see store/subscription.ts).
+      // Restore the upsell by re-pointing this to '/onboarding/paywall'.
+      router.push('/onboarding/ready');
     } else {
       setError('Account created — please confirm your email, then log in.');
     }
