@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Linking } from 'react-native';
 import { CameraView, type CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +19,17 @@ export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraType>('back');
   const [busy, setBusy] = useState(false);
+  const requestedRef = useRef(false);
+
+  // Apple 5.1.1(iv): no custom priming screen with an exit button or an "Allow"
+  // button before the system prompt. When permission is still undetermined we go
+  // straight to the OS request; the native dialog carries our usage description.
+  useEffect(() => {
+    if (permission && !permission.granted && permission.canAskAgain && !requestedRef.current) {
+      requestedRef.current = true;
+      requestPermission();
+    }
+  }, [permission, requestPermission]);
 
   const goToMood = (uri: string) => router.replace({ pathname: '/meal-capture', params: { img: uri, ...(date ? { date } : {}) } });
 
@@ -47,12 +58,19 @@ export default function CameraScreen() {
     return <View style={styles.black}><ActivityIndicator color="#fff" /></View>;
   }
   if (!permission.granted) {
+    // Undetermined: the effect above is firing the native prompt — just hold a
+    // plain screen behind the OS dialog (no priming UI, no exit button).
+    if (permission.canAskAgain) {
+      return <View style={styles.black}><ActivityIndicator color="#fff" /></View>;
+    }
+    // Denied: iOS won't re-prompt, so inform the user and link to Settings —
+    // explicitly allowed for a feature that can't function without the camera.
     return (
       <View style={[styles.black, styles.permWrap]}>
         <Text style={styles.permTitle}>Camera access</Text>
-        <Text style={styles.permBody}>Allow camera access to capture a meal, or pick one from your library.</Text>
-        <Pressable style={styles.permBtn} onPress={requestPermission}>
-          <Text style={styles.permBtnText}>Allow camera</Text>
+        <Text style={styles.permBody}>Camera access is turned off. Turn it on in Settings to capture a meal, or pick one from your library.</Text>
+        <Pressable style={styles.permBtn} onPress={() => Linking.openSettings()}>
+          <Text style={styles.permBtnText}>Open Settings</Text>
         </Pressable>
         <Pressable style={styles.permLibrary} onPress={openLibrary}>
           <Text style={styles.permLibraryText}>Choose from library instead</Text>
