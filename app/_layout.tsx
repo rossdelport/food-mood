@@ -56,8 +56,13 @@ export default function RootLayout() {
   // Tapping the meal-reminder notification opens the mood picker for that meal.
   useEffect(() => {
     const openFor = (data: unknown) => {
-      const mealId = (data as { mealId?: string })?.mealId;
-      if (mealId) router.push({ pathname: '/mood-picker', params: { mealId: String(mealId) } });
+      const d = data as { mealId?: string; mealTitle?: string };
+      if (d?.mealId) {
+        router.push({
+          pathname: '/mood-picker',
+          params: { mealId: String(d.mealId), ...(d.mealTitle ? { title: String(d.mealTitle) } : {}) },
+        });
+      }
     };
     const sub = Notifications.addNotificationResponseReceivedListener((res) => {
       openFor(res.notification.request.content.data);

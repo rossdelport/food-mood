@@ -18,15 +18,17 @@ export async function ensureNotifPermission(): Promise<boolean> {
   return req.granted;
 }
 
-// Schedule the "how did that meal feel?" reminder `minutes` from now.
-export async function scheduleMealReminder(mealId: string, minutes: number): Promise<string | null> {
+// Schedule the "how did that meal feel?" reminder `minutes` from now. The meal
+// title (when known) personalises both the notification body and the mood
+// picker it opens.
+export async function scheduleMealReminder(mealId: string, minutes: number, mealTitle?: string): Promise<string | null> {
   const ok = await ensureNotifPermission();
   if (!ok) return null;
   return Notifications.scheduleNotificationAsync({
     content: {
       title: 'Time to check in',
-      body: 'How did your last meal leave you feeling?',
-      data: { mealId },
+      body: mealTitle ? `How did "${mealTitle}" make you feel?` : 'How did your last meal leave you feeling?',
+      data: { mealId, mealTitle },
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,

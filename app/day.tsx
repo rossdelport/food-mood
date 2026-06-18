@@ -122,7 +122,7 @@ export default function DayViewScreen() {
                   onPress={() =>
                     m.mood
                       ? router.push({ pathname: '/breakdown', params: { mealId: m.id } })
-                      : router.push({ pathname: '/mood-picker', params: { mealId: m.id } })
+                      : router.push({ pathname: '/mood-picker', params: { mealId: m.id, title: m.title } })
                   }
                 />
               ))}

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import BackButton from '../components/BackButton';
 import MacroBar from '../components/MacroBar';
+import CelebrationModal from '../components/CelebrationModal';
 import { EditIcon, FlipIcon, CloseIcon } from '../components/NavIcons';
 import { detectMacros } from '../services/vision';
 import { createMeal } from '../services/meals';
@@ -13,6 +14,7 @@ import { scheduleMealReminder } from '../services/notifications';
 import { refreshMeals } from '../store/meals';
 import { refreshMoodDays } from '../store/moodDays';
 import { useProfile } from '../store/profile';
+import { loadJSON, saveJSON } from '../store/persist';
 import { showToast } from '../store/toast';
 import { hSuccess, hWarning } from '../services/haptics';
 import { macroGrams } from '../constants/data';
@@ -20,6 +22,7 @@ import { colors, fonts, radius as radii, buttonShadow, macroColors } from '../co
 import type { DetectedMeal } from '../types';
 
 const REJECT_COLOR = '#9B5158';
+const FIRST_MEAL_KEY = 'foodmood:firstMealCelebrated';
 
 export default function MealCaptureScreen() {
   const insets = useSafeAreaInsets();
@@ -33,6 +36,9 @@ export default function MealCaptureScreen() {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  // First-meal celebration: minutes until the reminder, or null if none was set.
+  const [celebrateMins, setCelebrateMins] = useState<number | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
 
   const analyze = useCallback(async () => {
     if (!img) return;
@@ -58,6 +64,17 @@ export default function MealCaptureScreen() {
   const rejected = detected != null && /not\s+(food|a meal)/i.test(detected.title);
   const goToCamera = () => router.replace(date ? { pathname: '/camera', params: { date } } : { pathname: '/camera' });
 
+  // Leave the capture flow once a meal is logged.
+  const leaveAfterLog = () => {
+    if (date) {
+      router.back(); // back-dated: return to the day view that launched the log
+    } else {
+      router.dismissAll(); // close the capture modals…
+      router.navigate('/'); // …and land on Home so the new meal is front and centre
+    }
+    showToast('Meal logged', 'check');
+  };
+
   const confirm = async () => {
     if (!detected || !img || saving) return;
     setSaving(true);
@@ -71,17 +88,22 @@ export default function MealCaptureScreen() {
       }
       const { id } = await createMeal({ uri: img, detected, reminderMins: profile.notif.mins, capturedAt });
       // Reminders only make sense for meals logged today.
-      const reminderId = isToday && profile.notif.on ? await scheduleMealReminder(id, profile.notif.mins) : 'off';
+      const reminderId = isToday && profile.notif.on ? await scheduleMealReminder(id, profile.notif.mins, detected.title) : 'off';
+      const reminderSet = reminderId !== null && reminderId !== 'off';
       await Promise.all([refreshMeals(), refreshMoodDays()]);
-      if (date) {
-        router.back(); // back-dated: return to the day view that launched the log
-      } else {
-        router.dismissAll(); // close the capture modals…
-        router.navigate('/'); // …and land on Home so the new meal is front and centre
-      }
       hSuccess();
-      showToast('Meal logged', 'check');
-      if (isToday && profile.notif.on && !reminderId) {
+
+      // Celebrate the very first meal a user logs (once per device).
+      const celebrated = await loadJSON<boolean>(FIRST_MEAL_KEY);
+      if (!celebrated) {
+        saveJSON(FIRST_MEAL_KEY, true);
+        setCelebrateMins(reminderSet ? profile.notif.mins : null);
+        setCelebrating(true); // CelebrationModal's CTA navigates away
+        return;
+      }
+
+      leaveAfterLog();
+      if (isToday && profile.notif.on && !reminderSet) {
         Alert.alert('Reminder not set', 'Allow notifications to get a gentle mood check-in after your meals.');
       }
     } catch (e) {
@@ -183,6 +205,12 @@ export default function MealCaptureScreen() {
           )}
         </View>
       )}
+
+      <CelebrationModal
+        visible={celebrating}
+        minutes={celebrateMins}
+        onDone={() => { setCelebrating(false); leaveAfterLog(); }}
+      />
     </View>
   );
 }

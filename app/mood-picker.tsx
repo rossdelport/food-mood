@@ -7,7 +7,7 @@ import BackButton from '../components/BackButton';
 import { CheckIcon } from '../components/NavIcons';
 import { hexA } from '../constants/data';
 import { useMoods } from '../store/moods';
-import { setMealMood } from '../services/meals';
+import { setMealMood, getMealById } from '../services/meals';
 import { refreshMeals } from '../store/meals';
 import { refreshMoodDays } from '../store/moodDays';
 import { showToast } from '../store/toast';
@@ -18,10 +18,20 @@ import { colors, fonts, radius as radii, buttonShadow } from '../constants/theme
 export default function MoodPickerScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { mealId } = useLocalSearchParams<{ mealId?: string }>();
+  const { mealId, title: titleParam } = useLocalSearchParams<{ mealId?: string; title?: string }>();
   const moods = useMoods();
   const [sel, setSel] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // The meal title personalises the heading. Passed in when the caller knows it
+  // (in-app taps, notification payload); fetched as a fallback on cold start.
+  const [mealTitle, setMealTitle] = useState<string | null>(titleParam ?? null);
+
+  useEffect(() => {
+    if (mealTitle || !mealId) return;
+    let alive = true;
+    getMealById(mealId).then((m) => { if (alive && m?.title) setMealTitle(m.title); });
+    return () => { alive = false; };
+  }, [mealId, mealTitle]);
 
   const onContinue = async () => {
     if (!sel || saving) return;
@@ -70,7 +80,7 @@ export default function MoodPickerScreen() {
 
       <View style={styles.heading}>
         <Text style={styles.eyebrow}>NEW ENTRY</Text>
-        <Text style={styles.title}>How are you feeling?</Text>
+        <Text style={styles.title}>{mealTitle ? `How did "${mealTitle}" make you feel?` : 'How are you feeling?'}</Text>
         <Text style={styles.sub}>Choose the colour that fits this meal.</Text>
       </View>
 
